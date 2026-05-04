@@ -149,37 +149,40 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
   });
 });
 
-// ═══════════ HOVER PREVIEW (smaller: 300x220) ═══════════
-var imgs = [], activeImg = null, targetX = 0, targetY = 0, currentX = 0, currentY = 0;
+// ═══════════ HOVER PREVIEW (desktop only) ═══════════
+(function() {
+  if ('ontouchstart' in window) return;
+  var imgs = [], activeImg = null, targetX = 0, targetY = 0, currentX = 0, currentY = 0;
 
-document.querySelectorAll('.work-card').forEach(function(card) {
-  var img = document.createElement('img');
-  img.className = 'work-preview'; img.src = card.dataset.image; img.alt = ''; img.draggable = false;
-  document.body.appendChild(img);
-  imgs.push({ card: card, img: img });
+  document.querySelectorAll('.work-card').forEach(function(card) {
+    var img = document.createElement('img');
+    img.className = 'work-preview'; img.src = card.dataset.image; img.alt = ''; img.draggable = false;
+    document.body.appendChild(img);
+    imgs.push({ card: card, img: img });
 
-  card.addEventListener('mouseenter', function() {
-    activeImg = img;
-    for (var j = 0; j < imgs.length; j++) imgs[j].img.classList.remove('visible');
-    img.classList.add('visible');
-    currentX = targetX; currentY = targetY;
+    card.addEventListener('mouseenter', function() {
+      activeImg = img;
+      for (var j = 0; j < imgs.length; j++) imgs[j].img.classList.remove('visible');
+      img.classList.add('visible');
+      currentX = targetX; currentY = targetY;
+    });
+    card.addEventListener('mousemove', function(e) {
+      if (activeImg === img) { targetX = e.clientX + 28; targetY = e.clientY - 120; }
+    });
+    card.addEventListener('mouseleave', function() {
+      if (activeImg === img) activeImg = null;
+      img.classList.remove('visible');
+    });
   });
-  card.addEventListener('mousemove', function(e) {
-    if (activeImg === img) { targetX = e.clientX + 28; targetY = e.clientY - 120; }
-  });
-  card.addEventListener('mouseleave', function() {
-    if (activeImg === img) activeImg = null;
-    img.classList.remove('visible');
-  });
-});
 
-(function animateHover() {
-  if (activeImg && window.innerWidth > 900) {
-    var dx = targetX - currentX, dy = targetY - currentY;
-    currentX += dx * 0.12; currentY += dy * 0.12;
-    activeImg.style.left = currentX + 'px'; activeImg.style.top = currentY + 'px';
-  }
-  requestAnimationFrame(animateHover);
+  (function animateHover() {
+    if (activeImg) {
+      var dx = targetX - currentX, dy = targetY - currentY;
+      currentX += dx * 0.12; currentY += dy * 0.12;
+      activeImg.style.left = currentX + 'px'; activeImg.style.top = currentY + 'px';
+    }
+    requestAnimationFrame(animateHover);
+  })();
 })();
 
 // ═══════════ PARALLAX SHOWCASE — mouse-follow with lerp delay ═══════════
@@ -643,6 +646,10 @@ workDetail.addEventListener('wheel', function(e) {
 (function() {
   var canvas = document.getElementById('framesCanvas');
   if (!canvas) return;
+  // CSS media queries control visibility — respect that
+  if (getComputedStyle(canvas).display === 'none') return;
+  // Also skip on touch devices
+  if ('ontouchstart' in window) { canvas.style.display = 'none'; return; }
   var ctx = canvas.getContext('2d');
 
   // Preload work images
@@ -951,7 +958,7 @@ workDetail.addEventListener('wheel', function(e) {
     return -1;
   }
 
-  var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  var isTouchDevice = 'ontouchstart' in window;
 
   canvas.addEventListener('mousedown', function(e) {
     if (isTouchDevice) return; // Let touch pass through to underlying elements
