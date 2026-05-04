@@ -357,6 +357,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
   .showcase-header{padding:0 32px;margin-bottom:40px}
   .showcase-item{height:42vh;padding:40px 32px;margin:0 16px 12px;border-radius:16px}
   .showcase-info h3{font-size:1.7rem}
+  .showcase-info .section-tag{font-size:.78rem}
   .showcase-info p{font-size:.78rem;line-height:1.6;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
   .motion-section{padding:100px 32px 80px}
   .motion-header{margin-bottom:40px}
@@ -426,6 +427,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
   .showcase-header{padding:0 28px}
   .showcase-item{height:38vh;padding:32px 28px;margin:0 12px 10px;border-radius:14px}
   .showcase-info h3{font-size:1.45rem}
+  .showcase-info .section-tag{font-size:.7rem}
   .motion-section{padding:80px 28px 60px}
   .motion-header{margin-bottom:32px}
   .about-grid{gap:28px}
