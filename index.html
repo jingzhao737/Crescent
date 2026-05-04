@@ -28,7 +28,17 @@
 <div class="cursor-dot" id="cursorDot"></div>
 <div class="cursor-ring" id="cursorRing"></div>
 <div class="page-transition" id="pageTransition"></div>
-<div class="loader" id="loader"><div class="loader-counter" id="loaderCounter">0</div></div>
+<div class="loader" id="loader">
+  <div class="loader-inner">
+    <div class="loader-digits" id="loaderDigits">
+      <span class="ld-digit" data-val="0">0</span>
+      <span class="ld-digit" data-val="0">0</span>
+      <span class="ld-digit" data-val="0">0</span>
+    </div>
+    <span class="loader-pct">%</span>
+    <div class="loader-bar"><div class="loader-bar-fill" id="loaderBar"></div></div>
+  </div>
+</div>
 
 <nav class="nav" id="nav">
   <a href="#" class="nav-logo" data-link="home">737</a>

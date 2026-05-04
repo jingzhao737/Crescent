@@ -73,22 +73,43 @@ document.querySelectorAll('a, .work-card, .footer-cta, .detail-close, button').f
 
 // ═══════════ LOADING ═══════════
 (function() {
-  var el = document.getElementById('loaderCounter');
+  var digits = document.querySelectorAll('.ld-digit');
+  var bar = document.getElementById('loaderBar');
   var loaderEl = document.getElementById('loader');
-  if (!el || !loaderEl) { revealCrescent(); if (loaderEl) loaderEl.style.display = 'none'; document.body.style.cursor = 'none'; return; }
-  var count = 0, total = 40;
+  if (!digits.length || !loaderEl) { revealCrescent(); if (loaderEl) loaderEl.style.display = 'none'; document.body.style.cursor = 'none'; return; }
+
+  var total = 45, count = 0;
   var iv = setInterval(function() {
     count++;
-    var pct = count / total, eased = 1 - Math.pow(1 - pct, 4);
-    el.textContent = Math.min(Math.round(eased * 100), 100);
+    var raw = count / total;
+    var eased = 1 - Math.pow(1 - raw, 4);
+    var num = Math.min(Math.round(eased * 100), 100);
+
+    // Update digit display
+    var str = ('00' + num).slice(-3);
+    for (var i = 0; i < 3; i++) {
+      var d = digits[i];
+      var val = str[i];
+      if (d.getAttribute('data-val') !== val) {
+        d.textContent = val;
+        d.setAttribute('data-val', val);
+        d.classList.add('pop');
+        setTimeout(function(el) { el.classList.remove('pop'); }, 150, d);
+      }
+    }
+
+    // Update progress bar
+    if (bar) bar.style.width = eased * 100 + '%';
+
     if (count >= total) {
-      clearInterval(iv); el.textContent = '100';
+      clearInterval(iv);
+      if (bar) bar.style.width = '100%';
       setTimeout(function() {
         loaderEl.classList.add('hide'); revealCrescent();
         setTimeout(function() { loaderEl.style.display = 'none'; document.body.style.cursor = 'none'; }, 600);
-      }, 350);
+      }, 400);
     }
-  }, 28);
+  }, 32);
 
   function revealCrescent() {
     document.querySelectorAll('.cr-char').forEach(function(el) {

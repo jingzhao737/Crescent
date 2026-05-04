@@ -33,7 +33,13 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 
 /* ═══════ LOADER (with CSS fallback) ═══════ */
 .loader{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;align-items:center;justify-content:center;pointer-events:all;animation:loaderFallback 5s linear forwards}
-.loader-counter{font-family:'Magnat',serif;font-size:clamp(6rem,12vw,10rem);color:var(--fg);font-weight:700;letter-spacing:-.04em}
+.loader-inner{display:flex;flex-direction:column;align-items:center;gap:24px}
+.loader-digits{display:flex;gap:.06em}
+.ld-digit{font-family:'Magnat',serif;font-size:clamp(6rem,12vw,10rem);color:var(--fg);font-weight:700;letter-spacing:-.04em;line-height:1;display:inline-block;transition:transform .15s var(--spring)}
+.ld-digit.pop{transform:scale(1.18)}
+.loader-pct{font-family:'Magnat',serif;font-size:clamp(2rem,4vw,3rem);color:var(--accent);font-weight:700;opacity:.6;margin-top:-12px}
+.loader-bar{width:180px;height:1.5px;background:rgba(255,255,255,.08);border-radius:1px;overflow:hidden}
+.loader-bar-fill{height:100%;width:0%;background:var(--accent);border-radius:1px;transition:width .3s var(--ease-out-expo)}
 .loader.hide{animation:hideLoader .6s var(--ease-power4-out) forwards;pointer-events:none}
 @keyframes hideLoader{from{opacity:1}to{opacity:0}}
 @keyframes loaderFallback{0%,90%{opacity:1;pointer-events:all}100%{opacity:0;pointer-events:none}}
