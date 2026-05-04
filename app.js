@@ -951,7 +951,10 @@ workDetail.addEventListener('wheel', function(e) {
     return -1;
   }
 
+  var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
   canvas.addEventListener('mousedown', function(e) {
+    if (isTouchDevice) return; // Let touch pass through to underlying elements
     var rect = canvas.getBoundingClientRect();
     var mx = e.clientX - rect.left;
     var my = e.clientY - rect.top;
@@ -977,6 +980,7 @@ workDetail.addEventListener('wheel', function(e) {
     var my = e.clientY - rect.top;
     mouseCanvasX = mx;
     mouseCanvasY = my;
+    if (isTouchDevice) return;
     if (draggedIdx >= 0) {
       var t = thumbs[draggedIdx];
       t.x = mx + dragOffX;
@@ -991,6 +995,7 @@ workDetail.addEventListener('wheel', function(e) {
   });
 
   canvas.addEventListener('mouseup', function(e) {
+    if (isTouchDevice) return;
     if (draggedIdx >= 0) {
       var rect = canvas.getBoundingClientRect();
       var mx = e.clientX - rect.left;
@@ -1020,61 +1025,55 @@ workDetail.addEventListener('wheel', function(e) {
     canvas.style.cursor = '';
   });
 
-  // Touch
-  canvas.addEventListener('touchstart', function(e) {
-    if (e.touches.length !== 1) return;
-    var rect = canvas.getBoundingClientRect();
-    var mx = e.touches[0].clientX - rect.left;
-    var my = e.touches[0].clientY - rect.top;
-    var idx = getThumbAt(mx, my);
-    if (idx !== -1) {
-      draggedIdx = idx;
-      var t = thumbs[idx];
-      dragOffX = t.x - mx;
-      dragOffY = t.y - my;
-      dragStartX = mx;
-      dragStartY = my;
-      prevMouseX = mx;
-      prevMouseY = my;
-      t.vx = 0; t.vy = 0;
-      e.preventDefault();
-    }
-  }, { passive: false });
+  // Touch: pass through to underlying elements, remove all touch handlers
+  canvas.addEventListener('touchstart', function(e) {}, { passive: true });
+  canvas.addEventListener('touchmove', function(e) {}, { passive: true });
+  canvas.addEventListener('touchend', function(e) {}, { passive: true });
 
-  canvas.addEventListener('touchmove', function(e) {
-    if (draggedIdx < 0) return;
-    e.preventDefault();
-    var rect = canvas.getBoundingClientRect();
-    var mx = e.touches[0].clientX - rect.left;
-    var my = e.touches[0].clientY - rect.top;
-    var t = thumbs[draggedIdx];
-    t.x = mx + dragOffX;
-    t.y = my + dragOffY;
-    t.vx = (mx - prevMouseX) * 0.4;
-    t.vy = (my - prevMouseY) * 0.4;
-    prevMouseX = mx;
-    prevMouseY = my;
-  }, { passive: false });
-
-  canvas.addEventListener('touchend', function(e) {
-    if (draggedIdx < 0) return;
-    var dist = Math.sqrt(Math.pow(prevMouseX - dragStartX, 2) + Math.pow(prevMouseY - dragStartY, 2));
-    if (dist < 3) {
-      var works = document.querySelectorAll('.work-card');
-      if (works[draggedIdx]) {
-        var card = works[draggedIdx];
-        var key = card.dataset.work;
-        var hero = card.dataset.hero;
-        if (key && workData && workData[key]) {
-          openDetail(workData[key], hero);
-        }
-      }
-    }
-    draggedIdx = -1;
-  });
+  // Touch: disabled on mobile — pass through to underlying elements
+  canvas.addEventListener('touchstart', function(e) {}, { passive: true });
+  canvas.addEventListener('touchmove', function(e) {}, { passive: true });
+  canvas.addEventListener('touchend', function(e) {}, { passive: true });
 
   resize();
   requestAnimationFrame(render);
 
   window.addEventListener('resize', function() { resize(); });
+})();
+
+// ═══════════ BACK TO TOP ═══════════
+(function() {
+  var btn = document.getElementById('backToTop');
+  if (!btn) return;
+
+  // Show after scrolling past hero
+  var hero = document.getElementById('home');
+  new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting) {
+      btn.classList.remove('visible');
+    } else {
+      btn.classList.add('visible');
+    }
+  }, { threshold: 0 }).observe(hero);
+
+  btn.addEventListener('click', function() {
+    // Smooth scroll with custom easing via requestAnimationFrame
+    var start = window.scrollY;
+    var startTime = null;
+    var duration = 1000;
+
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      var elapsed = ts - startTime;
+      var progress = Math.min(elapsed / duration, 1);
+      // Ease out quint — fast start, gentle landing
+      var eased = 1 - Math.pow(1 - progress, 5);
+      window.scrollTo(0, start * (1 - eased));
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    }
+
+    requestAnimationFrame(step);
+  });
 })();
