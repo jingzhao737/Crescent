@@ -23,7 +23,7 @@ var workData = {
       { h2: 'Process', p: 'Created entirely in a digital environment, this piece went through over sixty iterations. Each version stripped away another element until only the essential forms remained. The final composition uses just three distinct values.' },
       { h2: 'Context', p: 'This work was featured in the 2025 Digital Arts Biennale and later acquired by a private collector in Berlin. It represents a turning point in my digital practice toward greater economy of means.' }
     ],
-    gallery: ['images/detail/g2-1.jpg', 'images/detail/g2-2.jpg']
+    gallery: ['images/detail/g1-1.jpg', 'images/detail/g1-2.jpg']
   },
   neon: {
     name: 'Neon Liturgy', tag: 'Installation \u00b7 Light Art',
@@ -34,7 +34,7 @@ var workData = {
       { h2: 'Process', p: 'The acrylic panels were cast by hand, each with a unique surface texture that scatters light differently. The LEDs are controlled by a custom microcontroller running a generative algorithm that samples room tone and conversation fragments.' },
       { h2: 'Context', p: 'Originally commissioned for a group show exploring the intersection of technology and ritual, Neon Liturgy has since been adapted for three different venues, each time responding to the unique acoustic profile of its new environment.' }
     ],
-    gallery: ['images/detail/g3-1.png', 'images/detail/g3-2.png']
+    gallery: ['images/detail/g1-1.jpg', 'images/detail/g1-2.jpg']
   },
   tidal: {
     name: 'Tidal Memory', tag: 'Projection \u00b7 Site-Specific',
@@ -45,7 +45,7 @@ var workData = {
       { h2: 'Process', p: 'The projection mapping was developed using lidar scans of the building surface, allowing the imagery to conform precisely to every brick and window frame. The real-time data connection to tidal sensors means no two viewings are ever identical.' },
       { h2: 'Context', p: 'Commissioned for the 2023 Riverside Art Festival, Tidal Memory ran for three nights and was experienced by over 15,000 visitors. Documentation of the piece was later exhibited as a multi-channel video installation.' }
     ],
-    gallery: ['images/detail/g4-1.png', 'images/detail/g4-2.png']
+    gallery: ['images/detail/g1-1.jpg', 'images/detail/g1-2.jpg']
   }
 };
 
@@ -362,20 +362,54 @@ workDetail.addEventListener('wheel', function(e) {
   hero.addEventListener('touchmove', onMove, { passive: true });
   hero.addEventListener('touchend', onUp);
 
-  // Keyboard
+  // Keyboard — ArrowLeft=prev, ArrowRight=next (natural direction)
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowLeft') next();
-    if (e.key === 'ArrowRight') prev();
+    if (workDetail && workDetail.classList.contains('open')) return;
+    if (e.key === 'ArrowLeft') prev();
+    if (e.key === 'ArrowRight') next();
   });
 
   // Init
   applyOffsets();
-  videos[current].play().catch(function(){});
+  tryPlay(current);
 
-  // Auto-play active when in view
+  // Auto-play active when in view, with fallback play button for mobile
+  function tryPlay(idx) {
+    var p = videos[idx].play();
+    if (p && p.then) {
+      p.then(function() {
+        // Success: hide any fallback button
+        var btn = slides[idx].querySelector('.motion-play-btn');
+        if (btn) btn.classList.remove('show');
+      }).catch(function() {
+        // Autoplay blocked: show fallback play button
+        var existing = slides[idx].querySelector('.motion-play-btn');
+        var btn;
+        if (existing) {
+          btn = existing;
+        } else {
+          btn = document.createElement('button');
+          btn.className = 'motion-play-btn';
+          btn.setAttribute('aria-label', 'Play video');
+          slides[idx].appendChild(btn);
+        }
+        btn.classList.add('show');
+      });
+    }
+  }
+
+  // Delegate clicks on play buttons
+  track.addEventListener('click', function(e) {
+    var btn = e.target.closest('.motion-play-btn');
+    if (!btn) return;
+    btn.classList.remove('show');
+    videos[current].play().catch(function(){});
+    e.stopPropagation();
+  });
+
   new IntersectionObserver(function(entries) {
     if (entries[0].isIntersecting) {
-      videos[current].play().catch(function(){});
+      tryPlay(current);
     } else {
       for (var v2 = 0; v2 < videos.length; v2++) videos[v2].pause();
     }
@@ -441,7 +475,7 @@ workDetail.addEventListener('wheel', function(e) {
   if (!canvas) return;
   var ctx = canvas.getContext('2d');
   var stars = [];
-  var TARGET_COUNT = 260;
+  var TARGET_COUNT = window.innerWidth <= 768 ? 100 : 260;
   var frameCount = 0;
   var w, h, dpr;
 
@@ -579,6 +613,7 @@ workDetail.addEventListener('wheel', function(e) {
 
   window.addEventListener('resize', function() {
     resize();
+    TARGET_COUNT = window.innerWidth <= 768 ? 100 : 260;
     init();
   });
 })();
@@ -591,10 +626,10 @@ workDetail.addEventListener('wheel', function(e) {
 
   // Preload work images
   var frameImages = [
-    'images/works/image1.jpg',
+    'images/works/image4.jpg',
     'images/works/image2.jpg',
     'images/works/image3.jpg',
-    'images/works/image4.jpg'
+    'images/works/image1.jpg'
   ];
   var loadedImages = [null, null, null, null];
   var imgNaturalW = [0, 0, 0, 0], imgNaturalH = [0, 0, 0, 0];
@@ -605,26 +640,48 @@ workDetail.addEventListener('wheel', function(e) {
         loadedImages[idx] = img;
         imgNaturalW[idx] = img.naturalWidth;
         imgNaturalH[idx] = img.naturalHeight;
+        // Update thumb size if already initialized
+        if (thumbs[idx]) {
+          var sz = getThumbSize(idx, window.innerWidth);
+          thumbs[idx].dispW = sz.w;
+          thumbs[idx].dispH = sz.h;
+          // Recalculate restY based on current stringLen
+          var hero = document.getElementById('home');
+          if (hero) {
+            var hh = hero.getBoundingClientRect().height;
+            var lenFactors = [0.44, 0.52, 0.43, 0.50];
+            thumbs[idx].restY = thumbs[idx].anchorY + hh * lenFactors[idx];
+          }
+        }
       };
       img.src = frameImages[idx];
     })(fi);
   }
 
-  var maxThumbW = 190;
-  var springK = 0.12;
-  var damping = 0.94;
-  var gravity = 0.08;
+  var springK = 0.05;
+  var damping = 0.84;
+  var gravity = 0.06;
 
   var thumbs = [];
   var draggedIdx = -1;
+  var hoveredIdx = -1;
   var dragOffX = 0, dragOffY = 0;
   var dragStartX = 0, dragStartY = 0;
   var prevMouseX = 0, prevMouseY = 0;
+  var mouseCanvasX = 0, mouseCanvasY = 0;
 
-  function getThumbSize(idx) {
+  function getThumbW(screenW) {
+    if (screenW >= 1800) return 290;
+    if (screenW >= 1400) return 250;
+    if (screenW >= 1024) return 210;
+    if (screenW >= 768) return 160;
+    return 130;
+  }
+
+  function getThumbSize(idx, screenW) {
     var nw = imgNaturalW[idx] || 300;
     var nh = imgNaturalH[idx] || 200;
-    var w = maxThumbW;
+    var w = getThumbW(screenW);
     var h = w * (nh / nw);
     return { w: w, h: h };
   }
@@ -640,32 +697,42 @@ workDetail.addEventListener('wheel', function(e) {
     canvas.style.height = rect.height + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var w = rect.width, h = rect.height;
+    var maxW = getThumbW(w);
 
-    var anchorY = 0;
-    var spacing = maxThumbW * 0.7;
-    var baseX = w * 0.56;
-    var anchors = [
-      { x: baseX,           y: anchorY, restOffX: 0, stringLen: h * 0.42 },
-      { x: baseX + spacing, y: anchorY, restOffX: 0, stringLen: h * 0.50 },
-      { x: baseX + spacing * 2, y: anchorY, restOffX: 0, stringLen: h * 0.38 },
-      { x: baseX + spacing * 3, y: anchorY, restOffX: 0, stringLen: h * 0.46 }
-    ];
+    // Offset anchors below nav area so strings don't render over nav
+    var anchorY = 80;
+    var spacing = maxW * 0.62;
+    var totalWidth = spacing * 3;
+    var baseX = w * 0.42 + (w * 0.38 - totalWidth) / 2;
+    var lenFactors = [0.44, 0.52, 0.43, 0.50];
+    var anchors = [];
+    for (var ai = 0; ai < 4; ai++) {
+      anchors.push({
+        x: baseX + spacing * ai,
+        y: anchorY,
+        restOffX: 0,
+        stringLen: h * lenFactors[ai]
+      });
+    }
 
     if (thumbs.length === 0) {
+      var loadDelay = 0.45;
       for (var i = 0; i < 4; i++) {
         var a = anchors[i];
-        var sz = getThumbSize(i);
+        var sz = getThumbSize(i, w);
         var restX = a.x + a.restOffX;
         var restY = a.y + a.stringLen;
-        // Start above viewport for drop-in
-        var startY = -sz.h * 1.5;
+        var startY = -sz.h * 2.2;
+        var startX = restX + (Math.random() - 0.5) * 80;
         thumbs.push({
-          x: restX, y: startY, vx: 0, vy: 0,
+          x: startX, y: startY, vx: 0, vy: 0,
           anchorX: a.x, anchorY: a.y,
           restX: restX, restY: restY,
           dispW: sz.w, dispH: sz.h,
           entering: true,
-          enterDelay: i * 0.15
+          enterDelay: loadDelay + i * 0.12,
+          restOffX: 0,
+          hoverAlpha: 0
         });
       }
     } else {
@@ -675,7 +742,8 @@ workDetail.addEventListener('wheel', function(e) {
         thumbs[j].anchorY = b.y;
         thumbs[j].restX = b.x + b.restOffX;
         thumbs[j].restY = b.y + b.stringLen;
-        var sz2 = getThumbSize(j);
+        var sz2 = getThumbSize(j, w);
+        thumbs[j].dispW = sz2.w;
         thumbs[j].dispH = sz2.h;
       }
     }
@@ -687,22 +755,34 @@ workDetail.addEventListener('wheel', function(e) {
     if (!startTime) startTime = ts;
     var elapsed = (ts - startTime) / 1000;
 
+    // Update hover state from mouse position (when not dragging)
+    if (draggedIdx < 0) {
+      hoveredIdx = getThumbAt(mouseCanvasX, mouseCanvasY);
+    }
+
     for (var i = 0; i < thumbs.length; i++) {
       var t = thumbs[i];
+      // Gentle breathing scale — slow in, slightly faster out
+      var targetHA = (i === hoveredIdx && draggedIdx < 0) ? 1 : 0;
+      var speed = targetHA > t.hoverAlpha ? 0.04 : 0.05;
+      t.hoverAlpha += (targetHA - t.hoverAlpha) * speed;
+
       if (i === draggedIdx) continue;
 
-      // Entry drop
       if (t.entering) {
         if (elapsed < t.enterDelay) continue;
         t.vy += gravity;
         t.y += t.vy;
-        // Bounce off rest position
+        t.vx += (t.restX - t.x) * 0.03;
+        t.x += t.vx;
+        t.vx *= 0.9;
         if (t.y >= t.restY) {
           t.y = t.restY;
-          t.vy *= -0.35;
-          if (Math.abs(t.vy) < 0.8) {
+          t.vy *= -0.12;
+          if (Math.abs(t.vy) < 0.3 && Math.abs(t.x - t.restX) < 1) {
             t.y = t.restY;
-            t.vy = 0;
+            t.x = t.restX;
+            t.vx = 0; t.vy = 0;
             t.entering = false;
           }
         }
@@ -722,17 +802,44 @@ workDetail.addEventListener('wheel', function(e) {
   }
 
   function drawString(ax, ay, bx, by) {
+    var dx = bx - ax, dy = by - ay;
+    var len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 2) return;
+    // High segment count for smooth curve, coil count based on length
+    var segments = Math.floor(len * 2);
+    if (segments < 40) segments = 40;
+    var coils = Math.floor(len / 24);
+    if (coils < 2) coils = 2;
+    var amp = 12;
+
     ctx.beginPath();
     ctx.moveTo(ax, ay);
-    ctx.lineTo(bx, by);
-    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    // Knot at anchor
-    ctx.beginPath();
-    ctx.arc(ax, ay, 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.fill();
+    var perpX = -dy / len;
+    var perpY = dx / len;
+    // Draw in small segments with gradient alpha — fade from top to bottom
+    var subSegs = Math.floor(segments / 6);
+    if (subSegs < 8) subSegs = 8;
+    for (var g = 0; g < subSegs; g++) {
+      var t0 = g / subSegs;
+      var t1 = (g + 1) / subSegs;
+      // Alpha: 0 at top, 0.28 at bottom
+      var alpha = 0.28 * (t0 + t1) / 2;
+      ctx.beginPath();
+      var x0 = ax + dx * t0 + perpX * Math.sin(t0 * coils * Math.PI * 2) * amp;
+      var y0 = ay + dy * t0 + perpY * Math.sin(t0 * coils * Math.PI * 2) * amp;
+      ctx.moveTo(x0, y0);
+      var steps = Math.floor((t1 - t0) * segments);
+      if (steps < 4) steps = 4;
+      for (var s = 1; s <= steps; s++) {
+        var tt = t0 + (s / steps) * (t1 - t0);
+        var x = ax + dx * tt + perpX * Math.sin(tt * coils * Math.PI * 2) * amp;
+        var y = ay + dy * tt + perpY * Math.sin(tt * coils * Math.PI * 2) * amp;
+        ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,' + alpha + ')';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
   }
 
   function drawThumb(t, idx) {
@@ -742,16 +849,33 @@ workDetail.addEventListener('wheel', function(e) {
     var hw = t.dispW / 2;
     var hh = t.dispH / 2;
 
-    drawString(t.anchorX, t.anchorY, t.x, t.y - hh);
+    var ha = t.hoverAlpha || 0;
+    // Gentle ease-out scale, subtle
+    var eased = ha < 0.01 ? 0 : 1 - Math.pow(1 - ha, 4);
+    var scale = 1 + eased * 0.08;
+
+    // Soft white glow behind the card — subtle lamp effect
+    if (ha > 0.01) {
+      var glowR = Math.max(t.dispW, t.dispH) * 0.66;
+      var grad = ctx.createRadialGradient(t.x, t.y, glowR * 0.35, t.x, t.y, glowR);
+      grad.addColorStop(0, 'rgba(255,255,255,' + (eased * 0.15) + ')');
+      grad.addColorStop(0.5, 'rgba(255,255,255,' + (eased * 0.04) + ')');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(t.x - glowR * 2, t.y - glowR * 2, glowR * 4, glowR * 4);
+    }
+
+    drawString(t.anchorX, t.anchorY, t.x, t.y - hh * scale);
 
     ctx.save();
     ctx.translate(t.x, t.y);
+    ctx.scale(scale, scale);
 
-    // Outer glow
-    ctx.shadowColor = 'rgba(0,212,104,0.18)';
-    ctx.shadowBlur = 20;
+    // Subtle shadow for depth (not the glow, which is drawn above)
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 12 + eased * 8;
     ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
+    ctx.shadowOffsetY = 4 + eased * 6;
 
     var rx = -hw, ry = -hh, rr = 10;
     ctx.beginPath();
@@ -762,15 +886,11 @@ workDetail.addEventListener('wheel', function(e) {
     if (loadedImages[idx]) {
       ctx.drawImage(loadedImages[idx], rx, ry, t.dispW, t.dispH);
     } else {
-      ctx.fillStyle = '#1a1a1a';
+      ctx.fillStyle = '#0a0a0a';
       ctx.fillRect(rx, ry, t.dispW, t.dispH);
     }
 
     ctx.restore();
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
 
     ctx.restore();
   }
@@ -834,12 +954,14 @@ workDetail.addEventListener('wheel', function(e) {
     var rect = canvas.getBoundingClientRect();
     var mx = e.clientX - rect.left;
     var my = e.clientY - rect.top;
+    mouseCanvasX = mx;
+    mouseCanvasY = my;
     if (draggedIdx >= 0) {
       var t = thumbs[draggedIdx];
       t.x = mx + dragOffX;
       t.y = my + dragOffY;
-      t.vx = (mx - prevMouseX) * 0.8;
-      t.vy = (my - prevMouseY) * 0.8;
+      t.vx = (mx - prevMouseX) * 0.4;
+      t.vy = (my - prevMouseY) * 0.4;
       prevMouseX = mx;
       prevMouseY = my;
     } else {
@@ -866,12 +988,14 @@ workDetail.addEventListener('wheel', function(e) {
         }
       }
       draggedIdx = -1;
+      hoveredIdx = -1;
       canvas.style.cursor = '';
     }
   });
 
   canvas.addEventListener('mouseleave', function() {
     if (draggedIdx >= 0) draggedIdx = -1;
+    hoveredIdx = -1;
     canvas.style.cursor = '';
   });
 
@@ -905,8 +1029,8 @@ workDetail.addEventListener('wheel', function(e) {
     var t = thumbs[draggedIdx];
     t.x = mx + dragOffX;
     t.y = my + dragOffY;
-    t.vx = (mx - prevMouseX) * 0.8;
-    t.vy = (my - prevMouseY) * 0.8;
+    t.vx = (mx - prevMouseX) * 0.4;
+    t.vy = (my - prevMouseY) * 0.4;
     prevMouseX = mx;
     prevMouseY = my;
   }, { passive: false });
