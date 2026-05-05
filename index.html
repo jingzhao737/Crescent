@@ -89,6 +89,24 @@
   </div>
 </section>
 
+<!-- ═════ 3D ICE CRYSTAL ═════ -->
+<section class="ice-section" id="ice">
+  <!-- HDR 切换：三个同心圆 -->
+  <div class="hdr-switcher" id="hdrSwitcher">
+    <button class="hdr-ring" data-hdr="0" style="--ring-color:#8dba6d;"></button>
+    <button class="hdr-ring" data-hdr="1" style="--ring-color:#e8a44c;"></button>
+    <button class="hdr-ring" data-hdr="2" style="--ring-color:#8899bb;"></button>
+  </div>
+  <div class="ice-container">
+    <canvas class="ice-canvas" id="iceCanvas"></canvas>
+    <div class="ice-hint">
+      <span>Drag to rotate</span>
+      <span class="ice-hint-sep"></span>
+      <span>Scroll to zoom</span>
+    </div>
+  </div>
+</section>
+
 <!-- ═════ FEATURED SHOWCASE (parallax) ═════ -->
 <section class="showcase" id="showcase">
   <div class="showcase-header anim-up">
@@ -246,5 +264,15 @@
 </div>
 
 <script src="app.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.170.0/build/three.webgpu.js",
+    "three/tsl": "https://unpkg.com/three@0.170.0/build/three.webgpu.js",
+    "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="ice.js"></script>
 </body>
 </html>
