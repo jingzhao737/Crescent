@@ -4,9 +4,9 @@
 
 var workData = {
   flux: {
-    name: 'Chromatic Flux', tag: 'Abstract \u00b7 Color Field',
+    name: 'JingZhao737', tag: 'Abstract \u00b7 Color Field',
     subtitle: 'Oil on canvas. An exploration of chromatic tension and release.',
-    meta: { Medium: 'Oil on Canvas', Dimensions: '120 \u00d7 180 cm', Year: '2026' },
+    meta: { Medium: 'Oil on Canvas', Dimensions: '1280 \u00d7 720 px', Year: '2026' },
     content: [
       { h2: 'About This Work', p: 'Chromatic Flux is the culmination of a year-long investigation into how adjacent hues interact at their boundaries. The painting uses over forty individually mixed oil pigments, applied in thin, translucent layers that build depth through optical blending rather than physical mixing.' },
       { h2: 'Process', p: 'Each layer required three to five days of drying time. The painting evolved slowly, with earlier layers influencing\u2014but not dictating\u2014later decisions. This deliberate pace allowed the color relationships to develop organically, almost geologically.' },
@@ -15,9 +15,9 @@ var workData = {
     gallery: ['images/detail/g1-1.jpg', 'images/detail/g1-2.jpg']
   },
   silence: {
-    name: 'The Shape of Silence', tag: 'Digital \u00b7 Minimal',
+    name: 'Star', tag: 'Digital \u00b7 Minimal',
     subtitle: 'A digital meditation on negative space and quiet intensity.',
-    meta: { Medium: 'Digital Painting', Dimensions: '4096 \u00d7 2160 px', Year: '2025' },
+    meta: { Medium: 'Digital Painting', Dimensions: '3440 \u00d7 2880 px', Year: '2025' },
     content: [
       { h2: 'About This Work', p: 'The Shape of Silence began as an experiment in restraint. How much can you remove from an image before it loses its voice? The answer, I discovered, is almost everything\u2014as long as what remains is placed with absolute conviction.' },
       { h2: 'Process', p: 'Created entirely in a digital environment, this piece went through over sixty iterations. Each version stripped away another element until only the essential forms remained. The final composition uses just three distinct values.' },
@@ -26,9 +26,9 @@ var workData = {
     gallery: ['images/detail/g1-1.jpg', 'images/detail/g1-2.jpg']
   },
   neon: {
-    name: 'Neon Liturgy', tag: 'Installation \u00b7 Light Art',
+    name: 'Blade Runner', tag: 'Installation \u00b7 Light Art',
     subtitle: 'Acrylic, LED, and the ritual of artificial light.',
-    meta: { Medium: 'Acrylic & LED Installation', Dimensions: '150 \u00d7 200 cm', Year: '2024' },
+    meta: { Medium: 'Acrylic & LED Installation', Dimensions: '2580 \u00d7 1080 px', Year: '2024' },
     content: [
       { h2: 'About This Work', p: 'Neon Liturgy transforms a gallery wall into a luminous altar. Seven individually programmed LED strips respond to ambient sound, creating a constantly shifting composition that never repeats.' },
       { h2: 'Process', p: 'The acrylic panels were cast by hand, each with a unique surface texture that scatters light differently. The LEDs are controlled by a custom microcontroller running a generative algorithm that samples room tone and conversation fragments.' },
@@ -37,9 +37,9 @@ var workData = {
     gallery: ['images/detail/g1-1.jpg', 'images/detail/g1-2.jpg']
   },
   tidal: {
-    name: 'Tidal Memory', tag: 'Projection \u00b7 Site-Specific',
+    name: 'Breath', tag: 'Projection \u00b7 Site-Specific',
     subtitle: 'An ephemeral intervention mapping memory onto urban surfaces.',
-    meta: { Medium: 'Projection Mapping', Dimensions: 'Site-specific / Variable', Year: '2023' },
+    meta: { Medium: 'Projection Mapping', Dimensions: '2580 \u00d7 1080 px', Year: '2023' },
     content: [
       { h2: 'About This Work', p: 'Tidal Memory is a site-specific projection piece that maps historical imagery onto the facade of a decommissioned riverside warehouse. The projected images rise and fall in intensity, synchronized with real-time tidal data from the adjacent river.' },
       { h2: 'Process', p: 'The projection mapping was developed using lidar scans of the building surface, allowing the imagery to conform precisely to every brick and window frame. The real-time data connection to tidal sensors means no two viewings are ever identical.' },
@@ -73,48 +73,35 @@ document.querySelectorAll('a, .work-card, .footer-cta, .detail-close, button').f
 
 // ═══════════ LOADING ═══════════
 (function() {
-  var digits = document.querySelectorAll('.ld-digit');
+  var numEl = document.getElementById('loaderNumber');
   var bar = document.getElementById('loaderBar');
   var loaderEl = document.getElementById('loader');
-  if (!digits.length || !loaderEl) { revealCrescent(); if (loaderEl) loaderEl.style.display = 'none'; document.body.style.cursor = 'none'; return; }
+  if (!numEl || !loaderEl) { revealCrescent(); if (loaderEl) loaderEl.style.display = 'none'; document.body.style.cursor = 'none'; return; }
 
-  var total = 45, count = 0;
+  var total = 50, count = 0;
   var iv = setInterval(function() {
     count++;
     var raw = count / total;
-    var eased = 1 - Math.pow(1 - raw, 4);
-    var num = Math.min(Math.round(eased * 100), 100);
-
-    // Update digit display
-    var str = ('00' + num).slice(-3);
-    for (var i = 0; i < 3; i++) {
-      var d = digits[i];
-      var val = str[i];
-      if (d.getAttribute('data-val') !== val) {
-        d.textContent = val;
-        d.setAttribute('data-val', val);
-        d.classList.add('pop');
-        setTimeout(function(el) { el.classList.remove('pop'); }, 150, d);
-      }
-    }
-
-    // Update progress bar
-    if (bar) bar.style.width = eased * 100 + '%';
+    var eased = 1 - Math.pow(1 - raw, 3);
+    var num = Math.floor(eased * 100);
+    numEl.innerHTML = num + '<span class="pct">%</span>';
+    if (bar) bar.style.width = (eased * 100) + '%';
 
     if (count >= total) {
       clearInterval(iv);
+      numEl.innerHTML = '100<span class="pct">%</span>';
       if (bar) bar.style.width = '100%';
       setTimeout(function() {
-        loaderEl.classList.add('hide'); revealCrescent();
-        setTimeout(function() { loaderEl.style.display = 'none'; document.body.style.cursor = 'none'; }, 600);
-      }, 400);
+        loaderEl.classList.add('hide');
+        revealCrescent();
+        setTimeout(function() { loaderEl.style.display = 'none'; document.body.style.cursor = 'none'; }, 800);
+      }, 300);
     }
   }, 32);
 
   function revealCrescent() {
     document.querySelectorAll('.cr-char').forEach(function(el) {
       el.classList.add('revealed');
-      el.style.transitionDelay = (el.style.getPropertyValue('--cr-delay') || '0') + 's';
     });
   }
 })();
@@ -185,32 +172,67 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
   })();
 })();
 
-// ═══════════ PARALLAX SHOWCASE — mouse-follow with lerp delay ═══════════
+// ═══════════ PARALLAX SHOWCASE — hover tilt + drag + spring return ═══════════
 (function() {
   var items = document.querySelectorAll('.showcase-item[data-parallax]');
   if (items.length === 0) return;
 
-  // Per-item lerp state
   var states = [];
+  var activeDrag = null; // which state is being dragged
   for (var i = 0; i < items.length; i++) {
     var bg = items[i].querySelector('.showcase-bg');
     if (!bg) continue;
-    states.push({ el: bg, item: items[i], tx: 0, ty: 0, cx: 0, cy: 0 });
+    states.push({ el: bg, item: items[i], tx: 0, ty: 0, cx: 0, cy: 0, vx: 0, vy: 0, hover: false, dx: 0, dy: 0 });
+  }
+
+  function isInside(rect, mx, my) {
+    return mx >= rect.left && mx <= rect.right && my >= rect.top && my <= rect.bottom;
   }
 
   document.addEventListener('mousemove', function(e) {
     var mx = e.clientX, my = e.clientY;
     for (var i = 0; i < states.length; i++) {
-      var rect = states[i].item.getBoundingClientRect();
-      var vh = window.innerHeight;
-      // Only track when item is in viewport
-      if (rect.bottom < -100 || rect.top > vh + 100) continue;
-      // Map mouse position to parallax range (-25px to +25px)
-      var relX = (mx - rect.left) / rect.width - 0.5;
-      var relY = (my - rect.top) / rect.height - 0.5;
-      states[i].tx = relX * 30;
-      states[i].ty = relY * 28;
+      var s = states[i];
+      var rect = s.item.getBoundingClientRect();
+      var inside = isInside(rect, mx, my);
+      s.hover = inside;
+      if (inside) {
+        var relX = (mx - rect.left) / rect.width - 0.5;
+        var relY = (my - rect.top) / rect.height - 0.5;
+        s.tx = relX * 30;
+        s.ty = relY * 28;
+      } else {
+        s.tx = 0;
+        s.ty = 0;
+      }
     }
+    // Drag
+    if (activeDrag) {
+      var s = activeDrag;
+      var rawX = mx - s.startX, rawY = my - s.startY;
+      // Progressive resistance — harder to drag the farther you go
+      var mag = Math.sqrt(rawX * rawX + rawY * rawY);
+      var factor = mag > 50 ? 1 / (1 + (mag - 50) * 0.015) : 1;
+      s.dx = rawX * factor;
+      s.dy = rawY * factor;
+    }
+  });
+
+  document.addEventListener('mousedown', function(e) {
+    for (var i = 0; i < states.length; i++) {
+      var rect = states[i].item.getBoundingClientRect();
+      if (isInside(rect, e.clientX, e.clientY)) {
+        activeDrag = states[i];
+        activeDrag.startX = e.clientX - activeDrag.dx;
+        activeDrag.startY = e.clientY - activeDrag.dy;
+        e.preventDefault();
+        break;
+      }
+    }
+  });
+
+  document.addEventListener('mouseup', function() {
+    activeDrag = null;
   });
 
   (function loop() {
@@ -219,12 +241,39 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
       var rect = s.item.getBoundingClientRect();
       var vh = window.innerHeight;
       if (rect.bottom < -200 || rect.top > vh + 200) continue;
-      // Lerp toward target with delay factor
-      s.cx += (s.tx - s.cx) * 0.06;
-      s.cy += (s.ty - s.cy) * 0.06;
-      var d = Math.sqrt(s.cx * s.cx + s.cy * s.cy);
-      var scale = 1.08 + d * 0.001;
-      s.el.style.transform = 'translate(' + s.cx + 'px,' + s.cy + 'px) scale(' + scale + ')';
+      // Drag spring return to 0 when not actively dragging
+      if (s !== activeDrag) {
+        var dk = 0.1, ddamp = 0.74;
+        s.vx += (0 - s.dx) * dk;
+        s.vy += (0 - s.dy) * dk;
+        s.vx *= ddamp;
+        s.vy *= ddamp;
+        s.dx += s.vx;
+        s.dy += s.vy;
+        if (Math.abs(s.dx) < 0.05 && Math.abs(s.dy) < 0.05 && Math.abs(s.vx) < 0.03 && Math.abs(s.vy) < 0.03) {
+          s.dx = 0; s.dy = 0; s.vx = 0; s.vy = 0;
+        }
+      }
+      // Hover spring
+      var k = 0.09, damp = 0.78;
+      s.cx += (s.tx - s.cx) * k;
+      s.cy += (s.ty - s.cy) * k;
+      s.cx *= damp;
+      s.cy *= damp;
+      var totalX = s.cx + s.dx;
+      var totalY = s.cy + s.dy;
+      // Snap when settled near 0
+      if (s.tx === 0 && s.ty === 0 && s.dx === 0 && s.dy === 0 && Math.abs(s.cx) < 0.08 && Math.abs(s.cy) < 0.08) {
+        s.cx = 0; s.cy = 0;
+        s.item.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+      }
+      var d = Math.sqrt(totalX * totalX + totalY * totalY);
+      var scale = 1 + d * 0.004;
+      s.el.style.transform = 'translate(' + totalX + 'px,' + totalY + 'px) scale(' + scale + ')';
+      // Tilt from hover only, not from drag
+      var rx = s.cy * 0.28;
+      var ry = -s.cx * 0.28;
+      s.item.style.transform = 'perspective(1000px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
     }
     requestAnimationFrame(loop);
   })();
