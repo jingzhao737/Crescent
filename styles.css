@@ -141,6 +141,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 
 /* ═══════ 3D ICE CRYSTAL ═══════ */
 .ice-section{padding:200px 64px 200px;max-width:1440px;margin:0 auto;position:relative}
+.ice-header{margin-bottom:60px}
+.ice-header .section-heading{margin-bottom:0}
 
 /* HDR 切换同心圆 */
 .hdr-switcher{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:8px;z-index:10;padding-right:24px}
@@ -370,6 +372,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
   .work-preview{display:none}
   .frames-canvas,.stars-canvas{display:none}
   .ice-section{padding:140px 40px 120px}
+  .ice-header{margin-bottom:40px}
   .ice-container{aspect-ratio:4/3;max-height:65vh}
   .ice-hint{font-size:.65rem;bottom:24px;gap:14px}
   .hero-content{z-index:3}
@@ -458,6 +461,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
   .marquee-track{gap:24px}
   .marquee-section{padding:80px 0}
   .ice-section{padding:100px 28px 80px}
+  .ice-header{margin-bottom:32px}
   .ice-container{aspect-ratio:3/4;max-height:55vh}
   .ice-hint{font-size:.6rem;bottom:24px;gap:10px;flex-direction:column}
   .ice-hint-sep{display:none}

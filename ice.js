@@ -1,39 +1,127 @@
 /* ═══════════════════════════════════════════
-   3D ICE — 玻璃菲涅尔 + HDR 预缓存 + 粒子 + 几何体
+   3D ICE — HDR + Model + Particles + Bloom + Lens Flare
    ═══════════════════════════════════════════ */
 
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+// ═══ Lens Flare Shader ═══
+const LensFlareShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    tBloom:   { value: null },
+    resolution: { value: new THREE.Vector2(1, 1) },
+    intensity:  { value: 1.2 },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform vec2 resolution;
+    uniform float intensity;
+    varying vec2 vUv;
+
+    void main() {
+      vec4 color = texture2D(tDiffuse, vUv);
+      vec2 uv = vUv;
+      vec2 center = vec2(0.5, 0.5);
+      vec2 dir = normalize(uv - center);
+      float dist = length(uv - center);
+
+      // ── Ghost artifacts ──
+      vec4 flare = vec4(0.0);
+      float ghostCount = 6.0;
+
+      for (float i = 1.0; i <= 6.0; i += 1.0) {
+        float offset = i / ghostCount;
+        float falloff = pow(1.0 - offset, 3.0);
+        vec2 ghostUv = uv - dir * offset * 0.35;
+
+        if (ghostUv.x < 0.0 || ghostUv.x > 1.0 ||
+            ghostUv.y < 0.0 || ghostUv.y > 1.0) continue;
+
+        vec4 ghost = texture2D(tDiffuse, ghostUv);
+        float ghostBright = dot(ghost.rgb, vec3(0.2126, 0.7152, 0.0722));
+
+        // Color shift per ghost — prismatic
+        vec3 tint = vec3(1.0);
+        if (i == 1.0) tint = vec3(0.9, 0.3, 0.1);
+        if (i == 2.0) tint = vec3(0.2, 0.5, 0.9);
+        if (i == 3.0) tint = vec3(0.3, 0.9, 0.2);
+        if (i == 4.0) tint = vec3(0.9, 0.2, 0.7);
+        if (i == 5.0) tint = vec3(0.7, 0.5, 0.2);
+        if (i == 6.0) tint = vec3(1.0, 0.8, 0.4);
+
+        float sizeFalloff = 1.0 - offset * 0.5;
+        float ghostWeight = ghostBright * falloff * 0.25 * sizeFalloff;
+        flare.rgb += ghost.rgb * tint * ghostWeight;
+        // Chroma shift on ghosts
+        float chroma = 0.04 * offset;
+        vec2 rUv = ghostUv + dir * chroma * 0.5;
+        vec2 bUv = ghostUv - dir * chroma * 0.3;
+        float rSample = texture2D(tDiffuse, rUv).r;
+        float bSample = texture2D(tDiffuse, bUv).b;
+        flare.r += rSample * ghostWeight * 0.3;
+        flare.b += bSample * ghostWeight * 0.3;
+      }
+
+      // ── Halo ring ──
+      float haloDist = length(uv - center);
+      float halo = smoothstep(0.07, 0.35, haloDist) * (1.0 - smoothstep(0.35, 0.55, haloDist));
+      vec2 haloUv = uv - dir * 0.12;
+      vec4 haloColor = texture2D(tDiffuse, haloUv);
+      float haloBright = dot(haloColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+      flare.rgb += haloColor.rgb * vec3(0.6, 0.3, 0.8) * halo * haloBright * 0.15;
+
+      // ── Anamorphic streak ──
+      vec2 texel = 1.0 / resolution;
+      vec3 streak = vec3(0.0);
+      for (float i = -15.0; i <= 15.0; i += 1.0) {
+        float t = i / 15.0;
+        vec2 offset = vec2(t * texel.x * 3.0, t * texel.y * 1.0);
+        vec4 s = texture2D(tDiffuse, uv + offset);
+        float b = dot(s.rgb, vec3(0.2126, 0.7152, 0.0722));
+        float w = exp(-abs(t) * 2.5);
+        streak += s.rgb * b * w * 0.08;
+      }
+
+      // ── Composite ──
+      vec3 result = color.rgb + flare.rgb * intensity + streak * intensity * 0.5;
+
+      // Subtle final tone to prevent blowout
+      result = result / (result + 1.0);
+
+      gl_FragColor = vec4(result, color.a);
+    }
+  `
+};
 
 (async function() {
-  const section = document.querySelector('.ice-section');
   const container = document.querySelector('.ice-container');
-  const canvasEl = document.getElementById('iceCanvas');
-  if (!section || !container || !canvasEl) return;
+  if (!container) return;
 
-  if (!navigator.gpu) {
-    const fallback = document.createElement('div');
-    fallback.style.cssText = `
-      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-      font-family:'JosefinSans',serif;color:rgba(255,255,255,.5);font-size:.85rem;
-      letter-spacing:.04em;text-align:center;padding:40px;z-index:2;
-    `;
-    fallback.innerHTML = 'Your browser does not support WebGPU.<br>Please use <b>Chrome 113+</b> or <b>Edge 113+</b>.';
-    section.appendChild(fallback);
-    return;
-  }
-
-  const renderer = new THREE.WebGPURenderer({ antialias: true, alpha: false });
-  await renderer.init();
+  // ═══ Renderer ═══
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.9;
+  renderer.toneMappingExposure = 1.15;
   renderer.setSize(container.clientWidth, container.clientHeight, false);
+  renderer.setClearColor(0x000000, 1);
 
-  canvasEl.parentNode.replaceChild(renderer.domElement, canvasEl);
-  renderer.domElement.id = 'iceCanvas';
+  const oldCanvas = container.querySelector('canvas');
+  container.insertBefore(renderer.domElement, oldCanvas);
+  if (oldCanvas) oldCanvas.remove();
   renderer.domElement.className = 'ice-canvas';
   renderer.domElement.style.cssText = 'display:block;width:100%;height:100%';
 
@@ -42,6 +130,26 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   const camera = new THREE.PerspectiveCamera(35, container.clientWidth / container.clientHeight, 0.1, 60);
   camera.position.set(0, -5, 8);
   camera.lookAt(0, 0, 0);
+
+  // ═══ Post Processing ═══
+  const composer = new EffectComposer(renderer);
+  const renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
+
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(container.clientWidth, container.clientHeight),
+    0.20,  // strength
+    0.3,   // radius
+    0.50   // threshold
+  );
+  composer.addPass(bloomPass);
+
+  const lensFlarePass = new ShaderPass(LensFlareShader);
+  lensFlarePass.uniforms['resolution'].value.set(
+    container.clientWidth, container.clientHeight
+  );
+  lensFlarePass.renderToScreen = true;
+  composer.addPass(lensFlarePass);
 
   // ═══ 粒子 ═══
   function addStars(count, rMin, rMax, color, size, opacity) {
@@ -64,30 +172,31 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     return pts;
   }
 
-  const nearStars = addStars(200, 7, 12, 0xcceeff, 0.04, 0.8);
-  const brightStars = addStars(150, 15, 45, 0xffffff, 0.1, 1.0);
-  const dimStars = addStars(500, 15, 45, 0x8899cc, 0.04, 0.6);
-  const farStars = addStars(800, 30, 80, 0x6677aa, 0.05, 0.4);
-  const deepStars = addStars(300, 50, 120, 0x556688, 0.06, 0.5);
-  const deepStars2 = addStars(200, 80, 200, 0x445566, 0.07, 0.4);
+  const nearStars   = addStars(200, 7, 12, 0xaaccff, 0.025, 0.25);
+  const brightStars = addStars(150, 15, 45, 0xccddff, 0.05,  0.30);
+  const dimStars    = addStars(500, 15, 45, 0x7799bb, 0.03,  0.15);
+  const farStars    = addStars(800, 30, 80, 0x6677aa, 0.035, 0.10);
+  const deepStars   = addStars(300, 50, 120, 0x556699, 0.04,  0.06);
+  const deepStars2  = addStars(200, 80, 200, 0x445588, 0.045, 0.04);
 
-  // ═══ 环绕自发光几何体 ═══
+  // ═══ 环绕几何体 ═══
   const orbitBodies = [];
-  const orbitColors = [0xffffff, 0xffccdd, 0xcceeff, 0xffeedd, 0xddddff, 0x88bbff];
+  const orbitColors = [0x6699cc, 0xdd8899, 0x77aadd, 0xddbb77, 0x99aadd, 0x88bbdd];
 
   for (let i = 0; i < 14; i++) {
     const radius = 2.5 + Math.random() * 4.5;
     const height = (Math.random() - 0.5) * 5;
     const speed = 0.15 + Math.random() * 0.5;
     const phase = Math.random() * Math.PI * 2;
-    const size = 0.04 + Math.random() * 0.14;
-    const isCube = i < 7;
-    const geo = isCube ? new THREE.BoxGeometry(size, size, size) : new THREE.SphereGeometry(size * 0.6, 16, 16);
-    const color = orbitColors[Math.floor(Math.random() * orbitColors.length)];
+    const geo = i < 7
+      ? new THREE.BoxGeometry(0.06, 0.06, 0.06)
+      : new THREE.SphereGeometry(0.045, 12, 12);
+    const color = orbitColors[i % orbitColors.length];
 
-    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
-      color, transparent: true, opacity: 0.7 + Math.random() * 0.3,
-      blending: THREE.AdditiveBlending, depthWrite: false
+    const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+      color, emissive: color, emissiveIntensity: 0.06,
+      metalness: 0.2, roughness: 0.6,
+      transparent: true, opacity: 0.35 + Math.random() * 0.2
     }));
     mesh.position.set(Math.cos(phase) * radius, height, Math.sin(phase) * radius);
     mesh.userData = { radius, height, speed, phase, rotSpeed: 0.5 + Math.random() * 2 };
@@ -95,7 +204,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     orbitBodies.push(mesh);
   }
 
-  // ═══ 模型 ═══
+  // ═══ 模型 — 白色 + 色散 ═══
   const gltf = await new Promise((res, rej) => {
     new GLTFLoader().load('model/Model1.glb', res, undefined, rej);
   });
@@ -112,10 +221,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     if (!child.isMesh) return;
     crystal.add(new THREE.Mesh(child.geometry, new THREE.MeshPhysicalMaterial({
       color: new THREE.Color(0xffffff),
-      metalness: 0, roughness: 0.04, ior: 1.5,
-      transmission: 0.96, thickness: 2.5,
-      envMap: null, envMapIntensity: 1.0,
-      specularIntensity: 0.8, specularColor: new THREE.Color(0xffffff),
+      metalness: 0.05, roughness: 0.08, ior: 1.5,
+      transmission: 0.92, thickness: 2.0,
+      envMapIntensity: 0.8,
+      specularIntensity: 1.0, specularColor: new THREE.Color(0xffffff),
+      dispersion: 0.5,
       side: THREE.DoubleSide, transparent: true,
     })));
   });
@@ -124,92 +234,86 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   crystal.position.set(-center.x * fitScale, -center.y * fitScale, -center.z * fitScale);
   scene.add(crystal);
 
-  // ═══ HDR 预缓存 + 秒切 ═══
+  // ═══ HDR ═══
   const pmremGen = new THREE.PMREMGenerator(renderer);
+  pmremGen.compileCubemapShader();
+
   const hdrDefs = [
-    { label: '足球场', path: 'images/exr/field_02k.exr', color: '#8dba6d' },
-    { label: '柑橘路', path: 'images/exr/orchard_01k.exr', color: '#e8a44c' },
-    { label: '阴天土', path: 'images/exr/overcast_02k.exr', color: '#8899bb' }
+    { label: 'field',    path: 'images/exr/field_02k.exr' },
+    { label: 'orchard',  path: 'images/exr/orchard_01k.exr' },
+    { label: 'overcast', path: 'images/exr/overcast_02k.exr' }
   ];
 
-  // 预加载所有 EXR → 缓存 { tex, env }，失败则用纯色降级
   const hdrCache = [];
-  await Promise.all(hdrDefs.map(async (def, idx) => {
+
+  await Promise.all(hdrDefs.map((def, idx) => {
     return new Promise((resolve) => {
-      new EXRLoader().load(def.path, function(tex) {
+      new EXRLoader().load(def.path, (tex) => {
         tex.mapping = THREE.EquirectangularReflectionMapping;
+        tex.colorSpace = THREE.LinearSRGBColorSpace;
         const env = pmremGen.fromEquirectangular(tex).texture;
         hdrCache[idx] = { tex, env };
         resolve();
-      }, undefined, () => {
-        // 加载失败 → 纯色降级
-        const c = new THREE.Color(def.color).multiplyScalar(0.4);
-        const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 256;
-        const ctx = canvas.getContext('2d');
-        const grad = ctx.createLinearGradient(0, 0, 0, 256);
-        grad.addColorStop(0, '#' + c.getHexString());
-        grad.addColorStop(0.5, '#' + c.multiplyScalar(1.3).getHexString());
-        grad.addColorStop(1, '#' + c.multiplyScalar(0.7).getHexString());
-        ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 256);
-        const fallbackTex = new THREE.CanvasTexture(canvas);
-        fallbackTex.mapping = THREE.EquirectangularReflectionMapping;
-        fallbackTex.colorSpace = THREE.SRGBColorSpace;
-        const env = pmremGen.fromEquirectangular(fallbackTex).texture;
-        hdrCache[idx] = { tex: fallbackTex, env, isFallback: true };
-        resolve();
-      });
+      }, undefined, () => resolve());
     });
   }));
 
   function applyHdr(idx) {
     const { tex, env } = hdrCache[idx];
     scene.background = tex;
-    scene.backgroundIntensity = 0.3;
+    scene.backgroundIntensity = 0.65;
     scene.environment = env;
-    scene.environmentIntensity = 0.45;
-    scene.traverse(function(obj) {
+    scene.traverse((obj) => {
       if (obj.isMesh && obj.material && obj.material.isMeshPhysicalMaterial) {
         obj.material.envMap = env;
+        obj.material.envMapIntensity = 0.8;
         obj.material.needsUpdate = true;
       }
     });
   }
-  let currentHdr = 0;
-  applyHdr(0);
 
-  // 绑定按钮
+  let currentHdr = 0;
+  if (hdrCache[0]) applyHdr(0);
+
   const hdrBtns = document.querySelectorAll('.hdr-ring');
   hdrBtns[0]?.classList.add('active');
   hdrBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.hdr);
-      if (idx === currentHdr) return;
+      if (idx === currentHdr || !hdrCache[idx]) return;
       currentHdr = idx;
       hdrBtns.forEach((b,i) => b.classList.toggle('active', i === idx));
       applyHdr(idx);
     });
   });
 
-  // ═══ OrbitControls ═══
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true; controls.dampingFactor = 0.06;
-  controls.minDistance = 4; controls.maxDistance = 18;
-  controls.maxPolarAngle = Math.PI * 0.72; controls.minPolarAngle = Math.PI * 0.25;
-  controls.autoRotate = true; controls.autoRotateSpeed = 0.3;
+  // ═══ Controls (Trackball — 无死角全向旋转) ═══
+  const controls = new TrackballControls(camera, renderer.domElement);
+  controls.rotateSpeed = 1.2;
+  controls.zoomSpeed = 0.8;
+  controls.panSpeed = 0;
+  controls.noPan = true;
+  controls.minDistance = 1.5;
+  controls.maxDistance = 18;
+  controls.staticMoving = false;
+  controls.dynamicDampingFactor = 0.08;
   controls.target.set(0, 0, 0);
-  controls.enableZoom = true; controls.enablePan = false;
   controls.update();
 
+  // ═══ Resize ═══
   function resize() {
     const w = container.clientWidth, h = container.clientHeight;
     if (w === 0 || h === 0) return;
     renderer.setSize(w, h, false);
+    composer.setSize(w, h);
+    bloomPass.setSize(w, h);
+    lensFlarePass.uniforms['resolution'].value.set(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
   window.addEventListener('resize', resize);
-  resize();
 
+  // ═══ Loop ═══
   let visible = true;
   new IntersectionObserver(e => { visible = e[0].isIntersecting; }, { threshold: 0.05 }).observe(container);
 
@@ -218,6 +322,12 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     requestAnimationFrame(animate);
     if (!visible) return;
     const dt = Math.min(clock.getDelta(), 0.1);
+    // TrackballControls 不自带 autoRotate，手动旋转
+    const ra = 0.0025;
+    const px = camera.position.x, pz = camera.position.z;
+    camera.position.x = px * Math.cos(ra) + pz * Math.sin(ra);
+    camera.position.z = -px * Math.sin(ra) + pz * Math.cos(ra);
+    camera.lookAt(controls.target);
     controls.update();
 
     nearStars.rotation.y += dt * 0.04; nearStars.rotation.x += dt * 0.02;
@@ -238,7 +348,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       b.rotation.z += d.rotSpeed * 0.5 * dt;
     }
 
-    renderer.renderAsync(scene, camera);
+    composer.render();
   }
-  requestAnimationFrame(animate);
+  animate();
 })();
