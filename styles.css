@@ -72,7 +72,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 /* STARS */
 .stars-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
 
-/* HANGING FRAMES */
+/* HANGING CIRCLES */
 .frames-canvas{position:absolute;inset:0;z-index:1;pointer-events:all;isolation:isolate;transform:translate(4%,-6%)}
 .hero::after{content:'';position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse at 25% 60%,rgba(0,212,104,.035) 0%,transparent 65%);pointer-events:none}
 .hero-content{position:relative;z-index:2;max-width:1000px}

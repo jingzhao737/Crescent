@@ -691,9 +691,9 @@ workDetail.addEventListener('wheel', function(e) {
   });
 })();
 
-// ═══════════ HANGING CIRCLES ═══════════
+// ═══════════ HERO KNOBS ═══════════
 (function() {
-  var canvas = document.getElementById('framesCanvas');
+  var knobs = document.querySelectorAll('.knob');
   if (!canvas) return;
   // CSS media queries control visibility — respect that
   if (getComputedStyle(canvas).display === 'none') return;
@@ -701,10 +701,38 @@ workDetail.addEventListener('wheel', function(e) {
   if ('ontouchstart' in window) { canvas.style.display = 'none'; return; }
   var ctx = canvas.getContext('2d');
 
-  // 四个圆形把手的颜色
-  var knobColors = ['#8dba6d', '#e8a44c', '#cc7788', '#6699bb'];
-  // 所有圆相同大小
-  var circleSize = 16;
+  // Preload work images
+  var frameImages = [
+    'images/works/image4.jpg',
+    'images/works/image2.jpg',
+    'images/works/image3.jpg',
+    'images/works/image1.jpg'
+  ];
+  var loadedImages = [null, null, null, null];
+  var imgNaturalW = [0, 0, 0, 0], imgNaturalH = [0, 0, 0, 0];
+  for (var fi = 0; fi < 4; fi++) {
+    (function(idx) {
+      var img = new Image();
+      img.onload = function() {
+        loadedImages[idx] = img;
+        imgNaturalW[idx] = img.naturalWidth;
+        imgNaturalH[idx] = img.naturalHeight;
+        // Update thumb size if already initialized
+        if (thumbs[idx]) {
+          var sz = getThumbSize(idx, window.innerWidth);
+          thumbs[idx].dispW = sz.w;
+          thumbs[idx].dispH = sz.h;
+          // 所有帧底部齐平
+          var hero = document.getElementById('home');
+          if (hero) {
+            var hh = hero.getBoundingClientRect().height;
+            thumbs[idx].restY = Math.min(hh * 0.35, thumbs[idx].anchorY + hh * 0.5);
+          }
+        }
+      };
+      img.src = frameImages[idx];
+    })(fi);
+  }
 
   var springK = 0.05;
   var damping = 0.84;
@@ -718,13 +746,23 @@ workDetail.addEventListener('wheel', function(e) {
   var prevMouseX = 0, prevMouseY = 0;
   var mouseCanvasX = 0, mouseCanvasY = 0;
 
-  // 圆大小统一，随屏幕等比缩放
-  function getCircleSz(screenW) {
-    if (screenW >= 1800) return 22;
-    if (screenW >= 1400) return 20;
-    if (screenW >= 1024) return 18;
-    if (screenW >= 768) return 16;
-    return 14;
+  function getBaseW(screenW) {
+    if (screenW >= 1800) return 180;
+    if (screenW >= 1400) return 160;
+    if (screenW >= 1024) return 135;
+    if (screenW >= 768) return 105;
+    return 80;
+  }
+
+  // 每张预览图不同尺寸，形成节奏感
+  var sizeFactors = [0.85, 1.0, 1.1, 0.75];
+
+  function getThumbSize(idx, screenW) {
+    var nw = imgNaturalW[idx] || 300;
+    var nh = imgNaturalH[idx] || 200;
+    var w = getBaseW(screenW) * sizeFactors[idx];
+    var h = w * (nh / nw);
+    return { w: w, h: h };
   }
 
   function resize() {
@@ -739,20 +777,24 @@ workDetail.addEventListener('wheel', function(e) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var w = rect.width, h = rect.height;
 
-    // 4 个圆形，不对称排列，底部齐平，间距拉大
-    var anchorY = 50;
-    var sz = getCircleSz(w);
-    var gaps = [sz * 1.5, sz * 2.0, sz * 1.3];
-    var xOff = w * 0.56;
+    // 非对称排列 — 不等距 + 错落挂点，形成视觉节奏
+    var anchorY = 45;
+    var baseW = getBaseW(w);
+    var gaps = [baseW * 0.70, baseW * 0.95, baseW * 0.60];
+    var xOff = w * 0.54;
     var anchorXs = [xOff, xOff + gaps[0], xOff + gaps[0] + gaps[1], xOff + gaps[0] + gaps[1] + gaps[2]];
-    var bottomY = h * 0.33;
+    // 绳子长度不同，但 restY 对齐到同一水平线
+    var bottomY = h * 0.35;
     var anchors = [];
     for (var ai = 0; ai < 4; ai++) {
+      var fh = imgNaturalH[ai] && imgNaturalW[ai]
+        ? baseW * sizeFactors[ai] * (imgNaturalH[ai] / imgNaturalW[ai])
+        : baseW * sizeFactors[ai] * 0.67;
       anchors.push({
         x: anchorXs[ai],
         y: anchorY,
         restOffX: 0,
-        stringLen: bottomY - anchorY
+        stringLen: bottomY - anchorY - fh / 2
       });
     }
 
@@ -760,17 +802,16 @@ workDetail.addEventListener('wheel', function(e) {
       var loadDelay = 0.45;
       for (var i = 0; i < 4; i++) {
         var a = anchors[i];
-        var cs = getCircleSz(w);
+        var sz = getThumbSize(i, w);
         var restX = a.x + a.restOffX;
         var restY = a.y + a.stringLen;
-        var startY = -cs * 3;
-        var startX = restX + (Math.random() - 0.5) * 60;
+        var startY = -sz.h * 2.2;
+        var startX = restX + (Math.random() - 0.5) * 80;
         thumbs.push({
           x: startX, y: startY, vx: 0, vy: 0,
           anchorX: a.x, anchorY: a.y,
           restX: restX, restY: restY,
-          dispW: cs, dispH: cs,
-          color: knobColors[i],
+          dispW: sz.w, dispH: sz.h,
           entering: true,
           enterDelay: loadDelay + i * 0.12,
           restOffX: 0,
@@ -778,15 +819,15 @@ workDetail.addEventListener('wheel', function(e) {
         });
       }
     } else {
-      var cs2 = getCircleSz(w);
       for (var j = 0; j < 4; j++) {
         var b = anchors[j];
         thumbs[j].anchorX = b.x;
         thumbs[j].anchorY = b.y;
         thumbs[j].restX = b.x + b.restOffX;
         thumbs[j].restY = b.y + b.stringLen;
-        thumbs[j].dispW = cs2;
-        thumbs[j].dispH = cs2;
+        var sz2 = getThumbSize(j, w);
+        thumbs[j].dispW = sz2.w;
+        thumbs[j].dispH = sz2.h;
       }
     }
   }
@@ -885,51 +926,68 @@ workDetail.addEventListener('wheel', function(e) {
   }
 
   function drawThumb(t, idx) {
+    // Don't draw if still far above viewport
     if (t.y + t.dispH < -20) return;
 
-    var r = t.dispW / 2;
-    var ha = t.hoverAlpha || 0;
-    var eased = ha < 0.01 ? 0 : 1 - Math.pow(1 - ha, 4);
-    var scale = 1 + eased * 0.10;
+    var hw = t.dispW / 2;
+    var hh = t.dispH / 2;
 
-    // 发光效果
+    var ha = t.hoverAlpha || 0;
+    // Gentle ease-out scale, subtle
+    var eased = ha < 0.01 ? 0 : 1 - Math.pow(1 - ha, 4);
+    var scale = 1 + eased * 0.08;
+
+    // Soft white glow behind the card — subtle lamp effect
     if (ha > 0.01) {
-      var glowR = r * 3;
-      var grad = ctx.createRadialGradient(t.x, t.y, r * 0.3, t.x, t.y, glowR);
-      grad.addColorStop(0, t.color + Math.round(eased * 40).toString(16).padStart(2, '0'));
-      grad.addColorStop(0.4, t.color + Math.round(eased * 15).toString(16).padStart(2, '0'));
-      grad.addColorStop(1, t.color + '00');
+      var glowR = Math.max(t.dispW, t.dispH) * 0.66;
+      var grad = ctx.createRadialGradient(t.x, t.y, glowR * 0.35, t.x, t.y, glowR);
+      grad.addColorStop(0, 'rgba(255,255,255,' + (eased * 0.15) + ')');
+      grad.addColorStop(0.5, 'rgba(255,255,255,' + (eased * 0.04) + ')');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.fillStyle = grad;
-      ctx.fillRect(t.x - glowR, t.y - glowR, glowR * 2, glowR * 2);
+      ctx.fillRect(t.x - glowR * 2, t.y - glowR * 2, glowR * 4, glowR * 4);
     }
 
-    drawString(t.anchorX, t.anchorY, t.x, t.y);
+    drawString(t.anchorX, t.anchorY, t.x, t.y - hh * scale);
 
     ctx.save();
     ctx.translate(t.x, t.y);
     ctx.scale(scale, scale);
 
-    // 阴影
-    ctx.shadowColor = 'rgba(0,0,0,0.4)';
-    ctx.shadowBlur = 8 + eased * 6;
-    ctx.shadowOffsetY = 2 + eased * 4;
+    // Subtle shadow for depth (not the glow, which is drawn above)
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 12 + eased * 8;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 4 + eased * 6;
 
-    // 画圆环（空心圆）
+    var rx = -hw, ry = -hh, rr = 10;
     ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.arc(0, 0, r * 0.6, 0, Math.PI * 2, true);
-    ctx.fillStyle = t.color;
-    ctx.fill('evenodd');
+    roundedRect(ctx, rx, ry, t.dispW, t.dispH, rr);
+    ctx.save();
+    ctx.clip();
 
-    // 外发光边框
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = t.color;
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.stroke();
+    if (loadedImages[idx]) {
+      ctx.drawImage(loadedImages[idx], rx, ry, t.dispW, t.dispH);
+    } else {
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(rx, ry, t.dispW, t.dispH);
+    }
 
     ctx.restore();
+
+    ctx.restore();
+  }
+
+  function roundedRect(ctx, x, y, w, h, r) {
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
   }
 
   function render(ts) {
@@ -947,9 +1005,8 @@ workDetail.addEventListener('wheel', function(e) {
     for (var i = 0; i < thumbs.length; i++) {
       var t = thumbs[i];
       if (t.entering && t.y < t.restY) continue;
-      var r = t.dispW / 2;
-      var dx = mx - t.x, dy = my - t.y;
-      if (dx * dx + dy * dy <= r * r * 1.44) {
+      var hw = t.dispW / 2, hh = t.dispH / 2;
+      if (mx > t.x - hw && mx < t.x + hw && my > t.y - hh && my < t.y + hh) {
         return i;
       }
     }
@@ -1035,58 +1092,49 @@ workDetail.addEventListener('wheel', function(e) {
   canvas.addEventListener('touchmove', function(e) {}, { passive: true });
   canvas.addEventListener('touchend', function(e) {}, { passive: true });
 
-  resize();
-  requestAnimationFrame(render);
-  window.addEventListener('resize', function() { resize(); });
-
-  // 桌面端 hover 预览（基于 canvas hover 状态）
+  // 桌面端 hover 预览
   (function() {
     if ('ontouchstart' in window) return;
-    var previewImgs = [];
-    var workCards = document.querySelectorAll('.work-card');
-    workCards.forEach(function(card, i) {
+    var imgs = [];
+    document.querySelectorAll('.knob').forEach(function(knob) {
       var img = document.createElement('img');
       img.className = 'work-preview';
-      img.src = card.dataset.image;
+      img.src = knob.dataset.image;
       img.alt = '';
       img.draggable = false;
       document.body.appendChild(img);
-      previewImgs.push(img);
-    });
-
-    var lastHovered = -1;
-    var px = 0, py = 0, pcx = 0, pcy = 0;
-
-    canvas.addEventListener('mousemove', function(e) {
-      var rect = canvas.getBoundingClientRect();
-      var mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      var idx = getThumbAt(mx, my);
-      px = e.clientX + 80; py = e.clientY - 60;
-
-      if (idx !== lastHovered) {
-        previewImgs.forEach(function(im) { im.classList.remove('visible'); });
-        if (idx >= 0 && previewImgs[idx]) {
-          previewImgs[idx].classList.add('visible');
-          pcx = px; pcy = py;
+      imgs.push({ knob: knob, img: img });
+      var activeImg = null, tx = 0, ty = 0, cx = 0, cy = 0;
+      knob.addEventListener('mouseenter', function() {
+        activeImg = img;
+        document.querySelectorAll('.work-preview').forEach(function(i) { i.classList.remove('visible'); });
+        img.classList.add('visible');
+        cx = tx; cy = ty;
+      });
+      knob.addEventListener('mousemove', function(e) {
+        if (activeImg === img) { tx = e.clientX + 80; ty = e.clientY - 60; }
+      });
+      knob.addEventListener('mouseleave', function() {
+        if (activeImg === img) activeImg = null;
+        img.classList.remove('visible');
+      });
+      (function loop() {
+        if (activeImg) {
+          cx += (tx - cx) * 0.12; cy += (ty - cy) * 0.12;
+          if (activeImg === img) { activeImg.style.left = cx + 'px'; activeImg.style.top = cy + 'px'; }
         }
-        lastHovered = idx;
-      }
+        requestAnimationFrame(loop);
+      })();
     });
-
-    canvas.addEventListener('mouseleave', function() {
-      previewImgs.forEach(function(im) { im.classList.remove('visible'); });
-      lastHovered = -1;
-    });
-
-    (function loop() {
-      if (lastHovered >= 0 && previewImgs[lastHovered]) {
-        var im = previewImgs[lastHovered];
-        pcx += (px - pcx) * 0.12; pcy += (py - pcy) * 0.12;
-        im.style.left = pcx + 'px'; im.style.top = pcy + 'px';
-      }
-      requestAnimationFrame(loop);
-    })();
   })();
+
+  // 点击打开作品详情
+  knobs.forEach(function(knob) {
+    knob.addEventListener('click', function() {
+      var key = this.dataset.work;
+      if (key && workData && workData[key]) openDetail(workData[key], this.dataset.hero);
+    });
+  });
 })();
 
 // ═══════════ BACK TO TOP ═══════════
