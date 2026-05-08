@@ -2,163 +2,6 @@
    PORTFOLIO — APP JS v7 · ART DIRECTION
    ═══════════════════════════════════════════ */
 
-
-// ═══════════ THEME (global) ═══════════
-var isLight = false;
-(function initTheme() {
-  if (localStorage.getItem('theme') === 'light') {
-    document.documentElement.classList.add('light');
-    isLight = true;
-  }
-  var btn = document.getElementById('themeToggle');
-  var wrapper = document.getElementById('themePullWrapper');
-  var stringEl = document.getElementById('themePullString');
-  if (!btn) return;
-
-  // ── Web Audio API sound synth ──
-  var audioCtx = null;
-  function initAudio() {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-  }
-  function playTick(rate, vol) {
-    if (!audioCtx) return;
-    var t = audioCtx.currentTime;
-    var osc = audioCtx.createOscillator();
-    var gain = audioCtx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(2800 * rate, t);
-    osc.frequency.exponentialRampToValueAtTime(400 * rate, t + 0.06);
-    gain.gain.setValueAtTime(vol || 0.12, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start(t); osc.stop(t + 0.08);
-  }
-  function playClick() { playTick(1, 0.15); }
-  function playBounce() { playTick(0.65, 0.08); }
-
-  var dragEnd = 40;
-  var threshold = 60;
-  var maxPull = 100;
-  var resistance = 0.2;
-  var dragging = false, startY = 0, pullY = 0, toggled = false;
-  var inMotion = false;
-
-  function setPull(v) {
-    var raw = Math.max(0, v);
-    if (raw <= dragEnd) {
-      pullY = raw;
-    } else {
-      pullY = dragEnd + (raw - dragEnd) * resistance;
-    }
-    pullY = Math.min(pullY, maxPull);
-
-    wrapper.style.transform = 'translateX(-50%) translateY(' + pullY + 'px)';
-    stringEl.style.height = (pullY + 14) + 'px';
-    if (pullY >= dragEnd && !toggled) {
-      btn.style.borderColor = 'var(--accent)';
-      btn.style.boxShadow = '0 0 16px var(--accent-glow)';
-    } else if (pullY < dragEnd) {
-      btn.style.borderColor = '';
-      btn.style.boxShadow = '';
-    }
-    if (pullY >= threshold && !toggled) {
-      toggled = true;
-      doToggle();
-      playClick();
-      dragging = false;
-      springBack();
-    }
-  }
-
-  function springBack() {
-    inMotion = true;
-    wrapper.style.transition = 'transform .7s cubic-bezier(.34,1.56,.64,1)';
-    stringEl.style.transition = 'height .7s cubic-bezier(.34,1.56,.64,1)';
-    btn.style.transition = 'border-color .3s, box-shadow .3s';
-    setPull(0);
-    btn.style.borderColor = '';
-    btn.style.boxShadow = '';
-    setTimeout(function() {
-      wrapper.style.transition = '';
-      stringEl.style.transition = '';
-      btn.style.transition = '';
-      inMotion = false;
-    }, 750);
-  }
-
-  function bounceBack() {
-    var bounceY = pullY;
-    inMotion = true;
-    // Animate back with a nice spring — overshoot then settle
-    wrapper.style.transition = 'transform .65s cubic-bezier(.34,1.56,.64,1)';
-    stringEl.style.transition = 'height .65s cubic-bezier(.34,1.56,.64,1)';
-    btn.style.transition = 'border-color .3s, box-shadow .3s';
-    setPull(0);
-    btn.style.borderColor = '';
-    btn.style.boxShadow = '';
-    playBounce();
-    setTimeout(function() {
-      wrapper.style.transition = '';
-      stringEl.style.transition = '';
-      btn.style.transition = '';
-      inMotion = false;
-    }, 700);
-  }
-
-  function doToggle() {
-    document.documentElement.classList.toggle('light');
-    isLight = !isLight;
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-  }
-
-  function onStart(e) {
-    if (dragging || inMotion) return;
-    initAudio();
-    dragging = true; toggled = false;
-    e.preventDefault();
-    wrapper.style.transition = 'none';
-    stringEl.style.transition = 'none';
-    btn.style.transition = 'none';
-    btn.style.borderColor = '';
-    btn.style.boxShadow = '';
-    startY = e.touches ? e.touches[0].clientY : e.clientY;
-  }
-
-  function onMove(e) {
-    if (!dragging) return;
-    e.preventDefault();
-    var y = e.touches ? e.touches[0].clientY : e.clientY;
-    var dy = y - startY;
-    setPull(dy);
-  }
-
-  function onEnd(e) {
-    if (!dragging) return;
-    dragging = false;
-    if (pullY > 0 && !toggled) {
-      bounceBack();
-    } else if (!inMotion) {
-      springBack();
-    }
-  }
-
-  setPull(0);
-  stringEl.style.height = '14px';
-
-  [wrapper, btn].forEach(function(el) {
-    el.addEventListener('mousedown', onStart);
-    el.addEventListener('touchstart', onStart, { passive: false });
-  });
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('touchmove', onMove, { passive: false });
-  document.addEventListener('mouseup', onEnd);
-  document.addEventListener('touchend', onEnd);
-})();
-
-
 var workData = {
   flux: {
     name: 'JingZhao737', tag: 'Abstract \u00b7 Color Field',
@@ -339,7 +182,7 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
   for (var i = 0; i < items.length; i++) {
     var bg = items[i].querySelector('.showcase-bg');
     if (!bg) continue;
-    states.push({ el: bg, item: items[i], tx: 0, ty: 0, stx: 0, sty: 0, cx: 0, cy: 0, vx: 0, vy: 0, hover: false, dx: 0, dy: 0 });
+    states.push({ el: bg, item: items[i], tx: 0, ty: 0, cx: 0, cy: 0, vx: 0, vy: 0, hover: false, dx: 0, dy: 0 });
   }
 
   function isInside(rect, mx, my) {
@@ -356,11 +199,11 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
       if (inside) {
         var relX = (mx - rect.left) / rect.width - 0.5;
         var relY = (my - rect.top) / rect.height - 0.5;
-        s.stx = relX * 30;
-        s.sty = relY * 28;
+        s.tx = relX * 30;
+        s.ty = relY * 28;
       } else {
-        s.stx = 0;
-        s.sty = 0;
+        s.tx = 0;
+        s.ty = 0;
       }
     }
     // Drag
@@ -411,11 +254,8 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
           s.dx = 0; s.dy = 0; s.vx = 0; s.vy = 0;
         }
       }
-      // Smooth target tracking — lerp tx/ty toward stx/sty (fast response)
-      s.tx += (s.stx - s.tx) * 0.22;
-      s.ty += (s.sty - s.ty) * 0.22;
-      // Hover spring — smooth, no bounce
-      var k = 0.06, damp = 0.88;
+      // Hover spring
+      var k = 0.09, damp = 0.78;
       s.cx += (s.tx - s.cx) * k;
       s.cy += (s.ty - s.cy) * k;
       s.cx *= damp;
@@ -423,16 +263,17 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
       var totalX = s.cx + s.dx;
       var totalY = s.cy + s.dy;
       // Snap when settled near 0
-      if (s.stx === 0 && s.sty === 0 && s.dx === 0 && s.dy === 0 && Math.abs(s.cx) < 0.08 && Math.abs(s.cy) < 0.08) {
+      if (s.tx === 0 && s.ty === 0 && s.dx === 0 && s.dy === 0 && Math.abs(s.cx) < 0.08 && Math.abs(s.cy) < 0.08) {
         s.cx = 0; s.cy = 0;
-        s.item.style.transform = 'perspective(1000px) rotateX(0)';
+        s.item.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
       }
       var d = Math.sqrt(totalX * totalX + totalY * totalY);
       var scale = 1 + d * 0.004;
       s.el.style.transform = 'translate(' + totalX + 'px,' + totalY + 'px) scale(' + scale + ')';
-      // Tilt from hover only, not from drag (only vertical tilt, large angle)
-      var rx = s.cy * 2.2;
-      s.item.style.transform = 'perspective(1000px) rotateX(' + rx + 'deg)';
+      // Tilt from hover only, not from drag
+      var rx = s.cy * 0.28;
+      var ry = -s.cx * 0.28;
+      s.item.style.transform = 'perspective(1000px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
     }
     requestAnimationFrame(loop);
   })();
@@ -766,14 +607,12 @@ workDetail.addEventListener('wheel', function(e) {
     frameCount++;
     ctx.clearRect(0, 0, w, h);
 
-    // Subtle vignette overlay for depth (skip in light mode)
-    if (!isLight) {
-      var vignette = ctx.createRadialGradient(w * 0.5, h * 0.4, h * 0.15, w * 0.5, h * 0.4, w * 0.75);
-      vignette.addColorStop(0, 'rgba(0,0,0,0)');
-      vignette.addColorStop(1, 'rgba(0,0,0,0.35)');
-      ctx.fillStyle = vignette;
-      ctx.fillRect(0, 0, w, h);
-    }
+    // Subtle vignette overlay for depth
+    var vignette = ctx.createRadialGradient(w * 0.5, h * 0.4, h * 0.15, w * 0.5, h * 0.4, w * 0.75);
+    vignette.addColorStop(0, 'rgba(0,0,0,0)');
+    vignette.addColorStop(1, 'rgba(0,0,0,0.35)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, w, h);
 
     var t = ts * 0.001;
 
@@ -804,7 +643,7 @@ workDetail.addEventListener('wheel', function(e) {
         // Draw diamond star
         ctx.beginPath();
         drawDiamond(s.x, s.y, s.r * 2.0);
-        ctx.fillStyle = 'rgba(' + (isLight ? '0,0,0' : '255,255,255') + ',' + alpha + ')';
+        ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
         ctx.fill();
 
         // Starburst cross on brighter stars
@@ -1045,7 +884,7 @@ workDetail.addEventListener('wheel', function(e) {
         var y = ay + dy * tt + perpY * Math.sin(tt * coils * Math.PI * 2) * amp;
         ctx.lineTo(x, y);
       }
-      ctx.strokeStyle = 'rgba(' + (isLight ? '0,0,0' : '255,255,255') + ',' + alpha + ')';
+      ctx.strokeStyle = 'rgba(255,255,255,' + alpha + ')';
       ctx.lineWidth = 2;
       ctx.stroke();
     }

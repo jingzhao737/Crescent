@@ -1,7 +1,6 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="format-detection" content="telephone=no, date=no">
@@ -45,7 +44,12 @@
     <li><a href="#showcase" data-link="showcase">Featured</a></li>
     <li><a href="#motion" data-link="motion">Motion</a></li>
     <li><a href="#about" data-link="about">About</a></li>
-    <li class="nav-menu-li"> <div class="theme-pull-string" id="themePullString"></div> <div class="theme-pull-wrapper" id="themePullWrapper"> <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><span class="theme-toggle-icon"></span></button> </div> <button class="nav-menu-btn" id="navMenuBtn" aria-label="Menu"> <span class="menu-line"></span> <span class="menu-line"></span> </button> </li>
+    <li class="nav-menu-li">
+      <button class="nav-menu-btn" id="navMenuBtn" aria-label="Menu">
+        <span class="menu-line"></span>
+        <span class="menu-line"></span>
+      </button>
+    </li>
   </ul>
 </nav>
 
