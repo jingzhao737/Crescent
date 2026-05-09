@@ -660,6 +660,8 @@ workDetail.addEventListener('wheel', function(e) {
     panel.classList.add('open');
     document.body.style.overflow = 'hidden';
     cursorDot.style.opacity = '0'; cursorRing.style.opacity = '0';
+    var sb = document.getElementById('scrollBar');
+    if (sb) sb.style.display = 'none';
   }
 
   function closeMenu() {
@@ -667,6 +669,8 @@ workDetail.addEventListener('wheel', function(e) {
     panel.classList.remove('open');
     document.body.style.overflow = '';
     cursorDot.style.opacity = '0'; cursorRing.style.opacity = '0';
+    var sb = document.getElementById('scrollBar');
+    if (sb) sb.style.display = '';
   }
 
   btn.addEventListener('click', function() {
@@ -1293,8 +1297,50 @@ workDetail.addEventListener('wheel', function(e) {
   const thumb = document.getElementById('scrollThumb');
   if (!bar || !thumb) return;
 
+  // --- Generate tick marks between dot markers (based on section positions) ---
+  var ticksContainer = document.getElementById('scrollTicks');
+  function generateTicks() {
+    if (!ticksContainer) return;
+    ticksContainer.innerHTML = '';
+    var h = document.documentElement;
+    var totalH = h.scrollHeight - h.clientHeight;
+    if (totalH <= 0) return;
+    var dots = bar.querySelectorAll('.scroll-dot-marker');
+    for (var d = 0; d < dots.length - 1; d++) {
+      var elA = document.querySelector(dots[d].getAttribute('data-target'));
+      var elB = document.querySelector(dots[d + 1].getAttribute('data-target'));
+      if (!elA || !elB) continue;
+      var topA = (elA.getBoundingClientRect().top + h.scrollTop) / totalH * 100;
+      var topB = (elB.getBoundingClientRect().top + h.scrollTop) / totalH * 100;
+      if (topA >= topB) continue;
+      var step = (topB - topA) / 4;
+      for (var t = 1; t <= 3; t++) {
+        var pct = topA + step * t;
+        var tick = document.createElement('div');
+        tick.className = 'scroll-tick';
+        tick.style.top = pct + '%';
+        ticksContainer.appendChild(tick);
+      }
+    }
+  }
+
+  // --- Show/hide based on scroll position (hide on hero, show after) ---
+  function updateVisibility() {
+    var heroH = window.innerHeight;
+    var scrolled = window.scrollY;
+    if (scrolled < heroH * 0.5) {
+      bar.style.opacity = '0';
+      bar.style.pointerEvents = 'none';
+    } else {
+      bar.style.opacity = '1';
+      bar.style.pointerEvents = 'auto';
+    }
+  }
+  bar.style.transition = 'opacity .4s var(--ease-out-expo)';
+  updateVisibility();
+
   // --- Add page bubbles to dot markers ---
-  var dotLabels = { '#works': '01', '#ice': '02', '#showcase': '03', '#motion': '04', '#about': '05' };
+  var dotLabels = { '#home': '00', '#work': '01', '#ice': '02', '#showcase': '03', '#motion': '04', '#about': '05' };
   var dots = bar.querySelectorAll('.scroll-dot-marker');
 
   // --- smooth wheel scroll (declared early for bubble click) ---
@@ -1303,14 +1349,19 @@ workDetail.addEventListener('wheel', function(e) {
   var wheelRaf = null;
 
   function startWheelLerp() {
+    // Don't interfere with bubble-click lerpScroll
+    if (lerpActive && bubbleLerpStartTime > 0) return;
     if (wheelRaf) return;
     wheelRaf = requestAnimationFrame(function tick() {
+      // Yield to lerpScroll if it's handling a bubble click
+      if (lerpActive && bubbleLerpStartTime > 0) { wheelRaf = null; return; }
       var diff = wheelTarget - wheelCurrent;
       if (Math.abs(diff) < 0.3) {
         wheelCurrent = wheelTarget;
         document.documentElement.scrollTop = wheelCurrent;
         updatePosition();
         positionDots();
+        updateVisibility();
         wheelRaf = null;
         return;
       }
@@ -1318,6 +1369,7 @@ workDetail.addEventListener('wheel', function(e) {
       document.documentElement.scrollTop = wheelCurrent;
       updatePosition();
       positionDots();
+      updateVisibility();
       wheelRaf = requestAnimationFrame(tick);
     });
   }
@@ -1330,16 +1382,26 @@ workDetail.addEventListener('wheel', function(e) {
     bubble.className = 'scroll-bubble';
     bubble.textContent = 'P' + label;
     dot.appendChild(bubble);
-    // click bubble → scroll to section via lerp
+    // click bubble → smooth scroll with custom easing
     bubble.addEventListener('click', function(e){
+      e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       var el = document.querySelector(targetId);
       if (!el) return;
       var totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
       var targetTop = el.getBoundingClientRect().top + document.documentElement.scrollTop - document.documentElement.clientHeight * 0.1;
-      wheelTarget = Math.max(0, Math.min(totalH, targetTop));
-      wheelCurrent = document.documentElement.scrollTop;
-      startWheelLerp();
+      targetScroll = Math.max(0, Math.min(totalH, targetTop));
+      bubbleLerpStartScroll = document.documentElement.scrollTop;
+      // Duration based on distance: min 600ms, max 1800ms
+      var scrollDist = Math.abs(targetScroll - bubbleLerpStartScroll);
+      var viewH = document.documentElement.clientHeight;
+      var screens = scrollDist / viewH;
+      bubbleLerpDuration = Math.max(600, Math.min(1800, 400 + screens * 320));
+      bubbleLerpStartTime = performance.now();
+      currentScroll = bubbleLerpStartScroll;
+      lerpActive = true;
+      lerpScroll();
     });
   });
 
@@ -1378,9 +1440,10 @@ workDetail.addEventListener('wheel', function(e) {
   getMetrics();
   updatePosition();
   positionDots();
+  generateTicks();
 
-  window.addEventListener('scroll', function(){ updatePosition(); positionDots(); }, {passive: true});
-  window.addEventListener('resize', function(){ getMetrics(); updatePosition(); positionDots(); }, {passive: true});
+  window.addEventListener('scroll', function(){ updatePosition(); positionDots(); generateTicks(); updateVisibility(); }, {passive: true});
+  window.addEventListener('resize', function(){ getMetrics(); updatePosition(); positionDots(); generateTicks(); updateVisibility(); }, {passive: true});
 
   let activeTimer = null;
 
@@ -1423,6 +1486,10 @@ workDetail.addEventListener('wheel', function(e) {
     return positions;
   }
 
+  var bubbleLerpStartTime = 0;
+  var bubbleLerpDuration = 0;
+  var bubbleLerpStartScroll = 0;
+
   function lerpScroll() {
     if (!lerpActive) return;
     var diff = targetScroll - currentScroll;
@@ -1439,6 +1506,26 @@ workDetail.addEventListener('wheel', function(e) {
           break;
         }
       }
+    } else if (bubbleLerpStartTime > 0) {
+      // Use custom easeInOutCubic for smooth acceleration + deceleration
+      var elapsed = performance.now() - bubbleLerpStartTime;
+      var progress = Math.min(elapsed / bubbleLerpDuration, 1);
+      // easeInOutCubic: smooth start, smooth end
+      var eased = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      currentScroll = bubbleLerpStartScroll + (targetScroll - bubbleLerpStartScroll) * eased;
+      if (progress >= 1) {
+        currentScroll = targetScroll;
+        lerpActive = false;
+        bubbleLerpStartTime = 0;
+      }
+      document.documentElement.scrollTop = currentScroll;
+      updatePosition();
+      positionDots();
+      updateVisibility();
+      if (lerpActive) requestAnimationFrame(lerpScroll);
+      return;
     }
     currentScroll += diff * speed;
     if (Math.abs(diff) < 0.5) {
@@ -1448,6 +1535,7 @@ workDetail.addEventListener('wheel', function(e) {
     document.documentElement.scrollTop = currentScroll;
     updatePosition();
     positionDots();
+    updateVisibility();
     if (lerpActive) requestAnimationFrame(lerpScroll);
   }
 
@@ -1494,7 +1582,8 @@ workDetail.addEventListener('wheel', function(e) {
   });
 
   bar.addEventListener('mousedown', function(e){
-    if (e.target === thumb) return;
+    // Skip if clicking thumb or bubble
+    if (e.target === thumb || e.target.closest('.scroll-bubble') || e.target.closest('.scroll-dot-marker')) return;
     getMetrics();
     const rect = bar.getBoundingClientRect();
     const totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -1503,6 +1592,8 @@ workDetail.addEventListener('wheel', function(e) {
   });
 
   bar.addEventListener('click', function(e){
+    // If bubble was clicked, the bubble handler already took care of it
+    if (e.target.closest('.scroll-bubble')) return;
     const dot = e.target.closest('.scroll-dot-marker');
     if (!dot) return;
     const targetId = dot.getAttribute('data-target');
@@ -1510,15 +1601,24 @@ workDetail.addEventListener('wheel', function(e) {
     if (!el) return;
     var totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
     var targetTop = el.getBoundingClientRect().top + document.documentElement.scrollTop - document.documentElement.clientHeight * 0.1;
-    wheelTarget = Math.max(0, Math.min(totalH, targetTop));
-    wheelCurrent = document.documentElement.scrollTop;
-    startWheelLerp();
+    targetScroll = Math.max(0, Math.min(totalH, targetTop));
+    bubbleLerpStartScroll = document.documentElement.scrollTop;
+    var scrollDist = Math.abs(targetScroll - bubbleLerpStartScroll);
+    var viewH = document.documentElement.clientHeight;
+    var screens = scrollDist / viewH;
+    bubbleLerpDuration = Math.max(600, Math.min(1800, 400 + screens * 320));
+    bubbleLerpStartTime = performance.now();
+    currentScroll = bubbleLerpStartScroll;
+    lerpActive = true;
+    lerpScroll();
   });
 
   // --- smooth wheel scroll ---
 
   document.addEventListener('wheel', function(e) {
     if (dragging) return;
+    // Don't interfere with bubble-click lerp animation
+    if (lerpActive && bubbleLerpStartTime > 0) return;
     e.preventDefault();
     var totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
     if (!wheelRaf) {
