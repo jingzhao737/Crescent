@@ -1,6 +1,8 @@
 /* ═══════════════════════════════════════════
-   PORTFOLIO — APP JS v7 · ART DIRECTION
+   PORTFOLIO — APP JS v8 · LATCH SYSTEM
    ═══════════════════════════════════════════ */
+
+console.log('APP JS v8 loaded');
 
 
 // ═══════════ THEME (global) ═══════════
@@ -891,10 +893,55 @@ workDetail.addEventListener('wheel', function(e) {
   var thumbs = [];
   var draggedIdx = -1;
   var hoveredIdx = -1;
+  var latchedIdx = -1; // index of the disc locked to its anchor
   var dragOffX = 0, dragOffY = 0;
   var dragStartX = 0, dragStartY = 0;
   var prevMouseX = 0, prevMouseY = 0;
   var mouseCanvasX = 0, mouseCanvasY = 0;
+
+  // --- audio players for each disc ---
+  var audios = [
+    new Audio('sound/01.mp3'),
+    new Audio('sound/02.mp3'),
+    new Audio('sound/03.mp3'),
+    new Audio('sound/04.mp3')
+  ];
+  var prevHoveredIdx = -1;
+  audios.forEach(function(a) { a.loop = true; a.volume = 0.6; });
+
+  function handleAudioHover(newIdx) {
+    // If a disc is latched, don't override with hover
+    if (latchedIdx >= 0) {
+      window.__audioPlaying = true;
+      return;
+    }
+    if (newIdx === prevHoveredIdx) return;
+    // Stop previous
+    if (prevHoveredIdx >= 0 && prevHoveredIdx < 4) {
+      audios[prevHoveredIdx].pause();
+      audios[prevHoveredIdx].currentTime = 0;
+    }
+    // Play new
+    if (newIdx >= 0 && newIdx < 4) {
+      audios[newIdx].currentTime = 0;
+      audios[newIdx].play().catch(function(){});
+      window.__audioPlaying = true;
+    } else {
+      window.__audioPlaying = false;
+    }
+    prevHoveredIdx = newIdx;
+  }
+
+  // Force play for latched disc (called from mouseup)
+  window.__navWaveForcePlay = function(idx) {
+    for (var i = 0; i < audios.length; i++) {
+      if (i !== idx) { audios[i].pause(); audios[i].currentTime = 0; }
+    }
+    audios[idx].currentTime = 0;
+    audios[idx].play().catch(function(){});
+    window.__audioPlaying = true;
+    prevHoveredIdx = idx;
+  };
 
   function getCircleSz(screenW) {
     if (screenW >= 1800) return 156;
@@ -966,6 +1013,26 @@ workDetail.addEventListener('wheel', function(e) {
         thumbs[j].dispH = cs2;
       }
     }
+
+    // Position latch clips to match anchorX (same as canvas coords, no offset needed)
+    var clips = document.querySelectorAll('.latch-clip');
+    for (var k = 0; k < clips.length && k < thumbs.length; k++) {
+      clips[k].style.left = thumbs[k].anchorX + 'px';
+    }
+    // Click on HTML clip to unlatch
+    clips.forEach(function(clip, ci) {
+      clip.onclick = function() {
+        if (latchedIdx === ci) {
+          var tl = thumbs[latchedIdx];
+          tl.vy = -8;
+          tl.vx = (Math.random() - 0.5) * 3;
+          tl.entering = false;
+          latchedIdx = -1;
+          document.querySelectorAll('.latch-clip').forEach(function(c){ c.classList.remove('latched'); });
+          if (window.__navWaveStop) window.__navWaveStop(ci);
+        }
+      };
+    });
   }
 
   var startTime = 0;
@@ -980,6 +1047,22 @@ workDetail.addEventListener('wheel', function(e) {
 
     for (var i = 0; i < thumbs.length; i++) {
       var t = thumbs[i];
+      // Latched disc: smooth lock to HTML latch clip position
+      if (i === latchedIdx) {
+        if (i !== draggedIdx) {
+          var heroRect2 = document.getElementById('home').getBoundingClientRect();
+          var cRect2 = canvas.getBoundingClientRect();
+          var targetX = t.anchorX;
+          var targetY = (heroRect2.top + 60) - cRect2.top + 14; // center of half-circle
+          // Smooth lerp toward latch position
+          t.x += (targetX - t.x) * 0.3;
+          t.y += (targetY - t.y) * 0.3;
+          t.vx = 0; t.vy = 0;
+          t.entering = false;
+          t.hoverAlpha += (1 - t.hoverAlpha) * 0.05;
+          continue;
+        }
+      }
       var targetHA = (i === hoveredIdx && draggedIdx < 0) ? 1 : 0;
       var speed = targetHA > t.hoverAlpha ? 0.04 : 0.05;
       t.hoverAlpha += (targetHA - t.hoverAlpha) * speed;
@@ -1061,8 +1144,8 @@ workDetail.addEventListener('wheel', function(e) {
     var r = t.dispW / 2;
     var ha = t.hoverAlpha || 0;
 
-    var spinning = (idx === hoveredIdx || idx === draggedIdx) ? 1 : 0;
-    if (t._spin === undefined) t._spin = Math.random() * Math.PI * 2;
+    var spinning = (idx === hoveredIdx || idx === draggedIdx || idx === latchedIdx) ? 1 : 0;
+    if (t._spin === undefined) t._spin = 0;
     if (t._spinSpeed === undefined) t._spinSpeed = 0;
     if (t._spinTimer === undefined) t._spinTimer = 0;
     if (spinning) {
@@ -1072,6 +1155,14 @@ workDetail.addEventListener('wheel', function(e) {
     }
     var active = t._spinTimer > 0.2 ? 1 : 0;
     t._spinSpeed += (active * 0.015 - t._spinSpeed) * 0.04;
+    // When not active, slowly return spin to nearest multiple of 2π (reset position)
+    if (!active) {
+      var mod = t._spin % (Math.PI * 2);
+      if (mod < 0) mod += Math.PI * 2;
+      // snap to nearest 0 or π (pick the closer one)
+      var target = mod < Math.PI ? 0 : Math.PI * 2;
+      t._spin += (target - mod) * 0.03;
+    }
     t._spin += t._spinSpeed;
 
     var eased = ha < 0.01 ? 0 : 1 - Math.pow(1 - ha, 3);
@@ -1095,6 +1186,8 @@ workDetail.addEventListener('wheel', function(e) {
       ctx.fillStyle = grad;
       ctx.fillRect(t.x - glowR, t.y - glowR, glowR * 2, glowR * 2);
     }
+
+    // Latch clips handled via HTML overlay, not canvas
 
     drawString(t.anchorX, t.anchorY, t.x, t.y - r);
 
@@ -1165,7 +1258,6 @@ workDetail.addEventListener('wheel', function(e) {
   function getThumbAt(mx, my) {
     for (var i = 0; i < thumbs.length; i++) {
       var t = thumbs[i];
-      if (t.entering && t.y < t.restY) continue;
       var r = t.dispW / 2;
       var dx = mx - t.x, dy = my - t.y;
       if (dx * dx + dy * dy <= r * r * 1.44) {
@@ -1205,12 +1297,46 @@ workDetail.addEventListener('wheel', function(e) {
       var t = thumbs[draggedIdx];
       t.x = mx + dragOffX;
       t.y = my + dragOffY;
+      // If dragging a latched disc far enough, unlatch it
+      if (latchedIdx === draggedIdx) {
+        var heroRect3 = document.getElementById('home').getBoundingClientRect();
+        var cRect3 = canvas.getBoundingClientRect();
+        var latchCY = (heroRect3.top + 70) - cRect3.top;
+        var pullDist = Math.sqrt(Math.pow(t.x - t.anchorX, 2) + Math.pow(t.y - latchCY, 2));
+        if (pullDist > t.dispW * 0.6) {
+          latchedIdx = -1;
+          document.querySelectorAll('.latch-clip').forEach(function(c){ c.classList.remove('latched'); });
+          if (window.__navWaveStop) window.__navWaveStop(draggedIdx);
+        } else {
+          // Still close, snap back
+          t.x = t.anchorX; t.y = latchCY;
+        }
+      } else {
+        // Snap magnetism: if near latch clip, pull toward it
+        var heroRect3 = document.getElementById('home').getBoundingClientRect();
+        var latchScreenY2 = heroRect3.top + 70;
+        var canvasRect3 = canvas.getBoundingClientRect();
+        var discSX = canvasRect3.left + t.x;
+        var discSY = canvasRect3.top + t.y;
+        var latchSX = canvasRect3.left + t.anchorX;
+        var snapDx = discSX - latchSX;
+        var snapDy = discSY - latchScreenY2;
+        var snapDist = Math.sqrt(snapDx * snapDx + snapDy * snapDy);
+        var snapZone = t.dispW * 1.4;
+        if (snapDist < snapZone && snapDist > 5) {
+          var pull = (snapZone - snapDist) / snapZone;
+          pull = pull * pull * 0.12;
+          t.x -= (snapDx / snapDist) * snapDist * pull;
+          t.y -= (snapDy / snapDist) * snapDist * pull;
+        }
+      }
       t.vx = (mx - prevMouseX) * 0.4;
       t.vy = (my - prevMouseY) * 0.4;
       prevMouseX = mx;
       prevMouseY = my;
     } else {
       canvas.style.cursor = getThumbAt(mx, my) >= 0 ? 'grab' : '';
+      handleAudioHover(getThumbAt(mx, my));
     }
   });
 
@@ -1221,6 +1347,22 @@ workDetail.addEventListener('wheel', function(e) {
       var my = e.clientY - rect.top;
       var dist = Math.sqrt(Math.pow(mx - dragStartX, 2) + Math.pow(my - dragStartY, 2));
       if (dist < 3) {
+        // Short click: if this disc is latched, unlatch it with a bounce
+        console.log('short click on dragged', draggedIdx, 'latchedIdx', latchedIdx);
+        if (latchedIdx === draggedIdx) {
+          var tl = thumbs[latchedIdx];
+          tl.vy = -8;
+          tl.vx = (Math.random() - 0.5) * 3;
+          tl.entering = false;
+          latchedIdx = -1;
+          document.querySelectorAll('.latch-clip').forEach(function(c){ c.classList.remove('latched'); });
+          // Stop audio playback
+          if (window.__navWaveStop) window.__navWaveStop(draggedIdx);
+          draggedIdx = -1;
+          hoveredIdx = -1;
+          canvas.style.cursor = '';
+          return;
+        }
         var works = document.querySelectorAll('.work-card');
         if (works[draggedIdx]) {
           var card = works[draggedIdx];
@@ -1229,6 +1371,44 @@ workDetail.addEventListener('wheel', function(e) {
           if (key && workData && workData[key]) {
             openDetail(workData[key], hero);
           }
+        }
+      } else {
+        // Drag release: check if near HTML latch clip
+        var t = thumbs[draggedIdx];
+        var heroRect = document.getElementById('home').getBoundingClientRect();
+        var latchScreenY = heroRect.top + 70;
+        // Disc screen position (canvas uses transform, so screen = canvas pos + canvas offset)
+        var canvasRect = canvas.getBoundingClientRect();
+        var discScreenX = canvasRect.left + t.x;
+        var discScreenY = canvasRect.top + t.y;
+        // Latch X on screen = canvas left + anchorX
+        var latchScreenX = canvasRect.left + t.anchorX;
+        var dx2 = discScreenX - latchScreenX;
+        var dy2 = discScreenY - latchScreenY;
+        var latchDist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+        var latchThreshold = t.dispW * 1.2;
+        if (latchDist < latchThreshold) {
+          // Latch this disc, eject previous
+          if (latchedIdx >= 0 && latchedIdx !== draggedIdx) {
+            var ejected = thumbs[latchedIdx];
+            ejected.vy = -6;
+            ejected.vx = (Math.random() - 0.5) * 2;
+            ejected.entering = false;
+          }
+          latchedIdx = draggedIdx;
+          // Snap disc to latch position
+          var heroRect = document.getElementById('home').getBoundingClientRect();
+          var cRect = canvas.getBoundingClientRect();
+          t.x = t.anchorX;
+          t.y = (heroRect.top + 60) - cRect.top + 14;
+          t.vx = 0; t.vy = 0;
+          t.vx = 0; t.vy = 0;
+          // Update CSS class
+          document.querySelectorAll('.latch-clip').forEach(function(c, ci){
+            c.classList.toggle('latched', ci === latchedIdx);
+          });
+          // Start constant playback
+          if (window.__navWaveForcePlay) window.__navWaveForcePlay(draggedIdx);
         }
       }
       draggedIdx = -1;
@@ -1240,6 +1420,7 @@ workDetail.addEventListener('wheel', function(e) {
   canvas.addEventListener('mouseleave', function() {
     if (draggedIdx >= 0) draggedIdx = -1;
     hoveredIdx = -1;
+    handleAudioHover(-1);
     canvas.style.cursor = '';
   });
 
@@ -1629,4 +1810,72 @@ workDetail.addEventListener('wheel', function(e) {
     wheelTarget = Math.max(0, Math.min(totalH, wheelTarget));
     startWheelLerp();
   }, {passive: false});
+})();
+
+// ═══════════ NAV WAVEFORM ═══════════
+(function(){
+  var waveCanvas = document.getElementById('navWaveform');
+  if (!waveCanvas) return;
+  var ctx = waveCanvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var waveW = 0, waveH = 0;
+  var history = new Array(64).fill(0);
+
+  function initSize() {
+    waveW = waveCanvas.offsetWidth || waveCanvas.width || 140;
+    waveH = waveCanvas.offsetHeight || waveCanvas.height || 32;
+    waveCanvas.width = waveW * dpr;
+    waveCanvas.height = waveH * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  initSize();
+
+  var noisePhase = 0;
+  function draw() {
+    initSize();
+    if (waveW < 2 || waveH < 2) { requestAnimationFrame(draw); return; }
+    ctx.clearRect(0, 0, waveW, waveH);
+
+    var playing = window.__audioPlaying === true;
+    var mid = waveH / 2;
+
+    // Build smooth bar-style waveform
+    var segs = history.length - 1;
+    var segW = waveW / segs;
+
+    // Push new random bar height (or zero if not playing)
+    noisePhase += 0.08;
+    var active = playing;
+    // When not playing, fade to flat
+    var nextVal = active ? (Math.sin(noisePhase * 1.7) * 0.4 + Math.sin(noisePhase * 3.1) * 0.3 + Math.sin(noisePhase * 5.3) * 0.2) : 0;
+    history.push(nextVal);
+    if (history.length > segs + 1) history.shift();
+
+    // Fade to flat when not playing
+    var smooth = active ? 0.6 : 0.92;
+    for (var i = 0; i < history.length; i++) {
+      var target = active ? history[i] : 0;
+      history[i] = history[i] * smooth + target * (1 - smooth);
+    }
+
+    // Use accent warm orange in both modes
+    ctx.strokeStyle = '#E87C50';
+    ctx.lineWidth = 2.2;
+    ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (var i = 0; i < history.length; i++) {
+      var val = Math.max(-1, Math.min(1, history[i]));
+      var y = mid + val * (waveH * 0.32);
+      if (i === 0) ctx.moveTo(0, y);
+      else ctx.lineTo(i * segW, y);
+    }
+    ctx.stroke();
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  window.addEventListener('resize', initSize);
 })();
