@@ -290,7 +290,8 @@ const LensFlareShader = {
   // ═══ Controls (Trackball — 无死角全向旋转) ═══
   const controls = new TrackballControls(camera, renderer.domElement);
   controls.rotateSpeed = 1.2;
-  controls.zoomSpeed = 0.8;
+  controls.zoomSpeed = 0;
+  controls.noZoom = true;
   controls.panSpeed = 0;
   controls.noPan = true;
   controls.minDistance = 1.5;
@@ -312,6 +313,112 @@ const LensFlareShader = {
     camera.updateProjectionMatrix();
   }
   window.addEventListener('resize', resize);
+
+  // ═══ Zoom Slider ═══
+  const zoomKnob = document.getElementById('zoomKnob');
+  const zoomFill = document.getElementById('zoomFill');
+  const zoomTrack = document.getElementById('zoomSlider');
+  if (zoomKnob && zoomFill && zoomTrack) {
+  const zoomMin = controls.minDistance;
+  const zoomMax = controls.maxDistance;
+  let zoomValue = 1;
+  let zoomDragging = false;
+  let zoomStartX = 0, zoomStartVal = 0;
+
+  function zoomKnobPos(val) {
+    var pct = (val * 100) + '%';
+    zoomKnob.style.left = pct;
+    zoomFill.style.width = pct;
+  }
+
+  function applyZoom(val) {
+    var dist = zoomMax - val * (zoomMax - zoomMin);
+    var currentDist = camera.position.length();
+    if (currentDist < 0.001) return;
+    var scale = dist / currentDist;
+    camera.position.multiplyScalar(scale);
+  }
+
+  // Smooth zoom lerp
+  var zoomTarget = zoomValue;
+  var zoomRaf = null;
+  function startZoomLerp() {
+    if (zoomRaf) return;
+    zoomRaf = requestAnimationFrame(function tick() {
+      var diff = zoomTarget - zoomValue;
+      if (Math.abs(diff) < 0.002) {
+        zoomValue = zoomTarget;
+        zoomKnobPos(zoomValue);
+        applyZoom(zoomValue);
+        zoomRaf = null;
+        return;
+      }
+      zoomValue += diff * 0.06;
+      zoomKnobPos(zoomValue);
+      applyZoom(zoomValue);
+      zoomRaf = requestAnimationFrame(tick);
+    });
+  }
+
+  zoomValue = 1 - (camera.position.length() - zoomMin) / (zoomMax - zoomMin);
+  zoomValue = Math.max(0, Math.min(1, zoomValue));
+  zoomTarget = zoomValue;
+  zoomKnobPos(zoomValue);
+
+  function handleDragStart(clientX) {
+    zoomDragging = true;
+    zoomStartX = clientX;
+    zoomStartVal = zoomTarget;
+    zoomKnob.classList.add('active');
+  }
+
+  function handleDragMove(clientX) {
+    if (!zoomDragging) return;
+    var rect = zoomTrack.getBoundingClientRect();
+    var dx = (clientX - zoomStartX) / rect.width;
+    zoomTarget = Math.max(0, Math.min(1, zoomStartVal + dx));
+    startZoomLerp();
+  }
+
+  function handleDragEnd() {
+    if (!zoomDragging) return;
+    zoomDragging = false;
+    zoomKnob.classList.remove('active');
+  }
+
+  zoomTrack.addEventListener('mousedown', function(e) {
+    if (e.target === zoomKnob) {
+      handleDragStart(e.clientX);
+      e.preventDefault();
+      e.stopPropagation();
+    } else {
+      var rect = zoomTrack.getBoundingClientRect();
+      zoomTarget = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      startZoomLerp();
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+  zoomTrack.addEventListener('touchstart', function(e) {
+    if (e.target === zoomKnob) {
+      handleDragStart(e.touches[0].clientX);
+      e.preventDefault();
+      e.stopPropagation();
+    } else {
+      var rect = zoomTrack.getBoundingClientRect();
+      zoomTarget = Math.max(0, Math.min(1, (e.touches[0].clientX - rect.left) / rect.width));
+      startZoomLerp();
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, {passive: false});
+
+  document.addEventListener('mousemove', function(e) { handleDragMove(e.clientX); });
+  document.addEventListener('touchmove', function(e) { handleDragMove(e.touches[0].clientX); }, {passive: false});
+  document.addEventListener('mouseup', handleDragEnd);
+  document.addEventListener('touchend', handleDragEnd);
+  } // end zoomSlider check
 
   // ═══ Loop ═══
   let visible = true;

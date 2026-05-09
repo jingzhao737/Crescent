@@ -1285,3 +1285,248 @@ workDetail.addEventListener('wheel', function(e) {
     requestAnimationFrame(step);
   });
 })();
+
+
+// --- custom scroll bar ---
+(function(){
+  const bar = document.getElementById('scrollBar');
+  const thumb = document.getElementById('scrollThumb');
+  if (!bar || !thumb) return;
+
+  // --- Add page bubbles to dot markers ---
+  var dotLabels = { '#works': '01', '#ice': '02', '#showcase': '03', '#motion': '04', '#about': '05' };
+  var dots = bar.querySelectorAll('.scroll-dot-marker');
+
+  // --- smooth wheel scroll (declared early for bubble click) ---
+  var wheelTarget = document.documentElement.scrollTop;
+  var wheelCurrent = wheelTarget;
+  var wheelRaf = null;
+
+  function startWheelLerp() {
+    if (wheelRaf) return;
+    wheelRaf = requestAnimationFrame(function tick() {
+      var diff = wheelTarget - wheelCurrent;
+      if (Math.abs(diff) < 0.3) {
+        wheelCurrent = wheelTarget;
+        document.documentElement.scrollTop = wheelCurrent;
+        updatePosition();
+        positionDots();
+        wheelRaf = null;
+        return;
+      }
+      wheelCurrent += diff * 0.04;
+      document.documentElement.scrollTop = wheelCurrent;
+      updatePosition();
+      positionDots();
+      wheelRaf = requestAnimationFrame(tick);
+    });
+  }
+
+  dots.forEach(function(dot){
+    var targetId = dot.getAttribute('data-target');
+    var label = dotLabels[targetId] || '';
+    if (!label) return;
+    var bubble = document.createElement('span');
+    bubble.className = 'scroll-bubble';
+    bubble.textContent = 'P' + label;
+    dot.appendChild(bubble);
+    // click bubble → scroll to section via lerp
+    bubble.addEventListener('click', function(e){
+      e.stopPropagation();
+      var el = document.querySelector(targetId);
+      if (!el) return;
+      var totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      var targetTop = el.getBoundingClientRect().top + document.documentElement.scrollTop - document.documentElement.clientHeight * 0.1;
+      wheelTarget = Math.max(0, Math.min(totalH, targetTop));
+      wheelCurrent = document.documentElement.scrollTop;
+      startWheelLerp();
+    });
+  });
+
+  let dragging = false, startY = 0, startPageY = 0;
+  let trackH = 0;
+
+  function getMetrics(){
+    trackH = bar.getBoundingClientRect().height;
+  }
+
+  function updatePosition(){
+    if (trackH <= 0) getMetrics();
+    const h = document.documentElement;
+    const max = h.scrollHeight - h.clientHeight;
+    if (max <= 0) return;
+    const pct = h.scrollTop / max;
+    const shiftPx = (pct * 100 - 50) / 100 * trackH;
+    thumb.style.transform = 'translate(-50%,-50%) translateY(' + shiftPx + 'px)';
+  }
+
+  function positionDots(){
+    const h = document.documentElement;
+    const totalH = h.scrollHeight - h.clientHeight;
+    if (totalH <= 0) return;
+    const dots = bar.querySelectorAll('.scroll-dot-marker');
+    dots.forEach(function(dot){
+      const targetId = dot.getAttribute('data-target');
+      const el = document.querySelector(targetId);
+      if (!el) return;
+      const elTop = el.getBoundingClientRect().top + h.scrollTop + h.clientHeight * 0.05;
+      const pct = elTop / totalH;
+      dot.style.top = (pct * 100) + '%';
+    });
+  }
+
+  getMetrics();
+  updatePosition();
+  positionDots();
+
+  window.addEventListener('scroll', function(){ updatePosition(); positionDots(); }, {passive: true});
+  window.addEventListener('resize', function(){ getMetrics(); updatePosition(); positionDots(); }, {passive: true});
+
+  let activeTimer = null;
+
+  thumb.addEventListener('mousedown', function(e){
+    dragging = true;
+    startY = e.clientY;
+    startPageY = window.scrollY;
+    getMetrics();
+    clearTimeout(activeTimer);
+    activeTimer = setTimeout(function() { thumb.classList.add('active'); }, 150);
+    e.preventDefault();
+  });
+  thumb.addEventListener('touchstart', function(e){
+    dragging = true;
+    startY = e.touches[0].clientY;
+    startPageY = window.scrollY;
+    getMetrics();
+    clearTimeout(activeTimer);
+    activeTimer = setTimeout(function() { thumb.classList.add('active'); }, 150);
+    e.preventDefault();
+  }, {passive: false});
+
+  let targetScroll = 0;
+  let currentScroll = 0;
+  let lerpActive = false;
+
+  function getDotScrollPositions() {
+    const h = document.documentElement;
+    const totalH = h.scrollHeight - h.clientHeight;
+    if (totalH <= 0) return [];
+    const dots = bar.querySelectorAll('.scroll-dot-marker');
+    var positions = [];
+    dots.forEach(function(dot) {
+      var targetId = dot.getAttribute('data-target');
+      var el = document.querySelector(targetId);
+      if (!el) return;
+      var elTop = el.getBoundingClientRect().top + h.scrollTop + h.clientHeight * 0.05;
+      positions.push(elTop);
+    });
+    return positions;
+  }
+
+  function lerpScroll() {
+    if (!lerpActive) return;
+    var diff = targetScroll - currentScroll;
+    var speed = 0.2;
+    // snap damping: magnetic pull near dot anchors (drag only)
+    if (dragging) {
+      var dots = getDotScrollPositions();
+      var totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      var snapZone = totalH * 0.06;
+      for (var i = 0; i < dots.length; i++) {
+        var dist = Math.abs(currentScroll - dots[i]);
+        if (dist < snapZone) {
+          speed = 0.03 + (dist / snapZone) * 0.17;
+          break;
+        }
+      }
+    }
+    currentScroll += diff * speed;
+    if (Math.abs(diff) < 0.5) {
+      currentScroll = targetScroll;
+      lerpActive = false;
+    }
+    document.documentElement.scrollTop = currentScroll;
+    updatePosition();
+    positionDots();
+    if (lerpActive) requestAnimationFrame(lerpScroll);
+  }
+
+  document.addEventListener('mousemove', function(e){
+    if (!dragging) return;
+    getMetrics();
+    const dy = e.clientY - startY;
+    const totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    if (totalH <= 0) return;
+    targetScroll = startPageY + dy / trackH * totalH;
+    targetScroll = Math.max(0, Math.min(totalH, targetScroll));
+    if (!lerpActive) {
+      currentScroll = document.documentElement.scrollTop;
+      lerpActive = true;
+      requestAnimationFrame(lerpScroll);
+    }
+  });
+  document.addEventListener('touchmove', function(e){
+    if (!dragging) return;
+    getMetrics();
+    const dy = e.touches[0].clientY - startY;
+    const totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    if (totalH <= 0) return;
+    targetScroll = startPageY + dy / trackH * totalH;
+    targetScroll = Math.max(0, Math.min(totalH, targetScroll));
+    if (!lerpActive) {
+      currentScroll = document.documentElement.scrollTop;
+      lerpActive = true;
+      requestAnimationFrame(lerpScroll);
+    }
+  }, {passive: false});
+
+  document.addEventListener('mouseup', function(){
+    if (!dragging) return;
+    dragging = false;
+    clearTimeout(activeTimer);
+    thumb.classList.remove('active');
+  });
+  document.addEventListener('touchend', function(){
+    if (!dragging) return;
+    dragging = false;
+    clearTimeout(activeTimer);
+    thumb.classList.remove('active');
+  });
+
+  bar.addEventListener('mousedown', function(e){
+    if (e.target === thumb) return;
+    getMetrics();
+    const rect = bar.getBoundingClientRect();
+    const totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const pct = (e.clientY - rect.top) / rect.height;
+    document.documentElement.scrollTop = pct * totalH;
+  });
+
+  bar.addEventListener('click', function(e){
+    const dot = e.target.closest('.scroll-dot-marker');
+    if (!dot) return;
+    const targetId = dot.getAttribute('data-target');
+    var el = document.querySelector(targetId);
+    if (!el) return;
+    var totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    var targetTop = el.getBoundingClientRect().top + document.documentElement.scrollTop - document.documentElement.clientHeight * 0.1;
+    wheelTarget = Math.max(0, Math.min(totalH, targetTop));
+    wheelCurrent = document.documentElement.scrollTop;
+    startWheelLerp();
+  });
+
+  // --- smooth wheel scroll ---
+
+  document.addEventListener('wheel', function(e) {
+    if (dragging) return;
+    e.preventDefault();
+    var totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    if (!wheelRaf) {
+      wheelCurrent = document.documentElement.scrollTop;
+      wheelTarget = wheelCurrent;
+    }
+    wheelTarget += e.deltaY * 1.2;
+    wheelTarget = Math.max(0, Math.min(totalH, wheelTarget));
+    startWheelLerp();
+  }, {passive: false});
+})();
