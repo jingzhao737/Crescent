@@ -6,6 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="format-detection" content="telephone=no, date=no">
 <title>Portfolio — Visual Art &amp; Design</title>
+<link rel="preload" href="Font/static/JosefinSans-Thin.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="Font0/magnat-poster-bold.otf" as="font" type="font/otf" crossorigin>
 <style>
 @font-face{font-family:'JosefinSans';src:url('Font/static/JosefinSans-Thin.ttf') format('truetype');font-weight:100;font-style:normal;font-display:swap}
 @font-face{font-family:'JosefinSans';src:url('Font/static/JosefinSans-ThinItalic.ttf') format('truetype');font-weight:100;font-style:italic;font-display:swap}
@@ -46,6 +48,7 @@
     <li><a href="#work" data-link="work">Work</a></li>
     <li><a href="#showcase" data-link="showcase">Featured</a></li>
     <li><a href="#motion" data-link="motion">Motion</a></li>
+    <li><a href="#poetry" data-link="poetry">Poetry</a></li>
     <li><a href="#about" data-link="about">About</a></li>
     <li class="nav-menu-li"> <div class="theme-pull-string" id="themePullString"></div> <div class="theme-pull-wrapper" id="themePullWrapper"> <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><span class="theme-toggle-icon"></span></button> </div> <button class="nav-menu-btn" id="navMenuBtn" aria-label="Menu"> <span class="menu-line"></span> <span class="menu-line"></span> </button> </li>
   </ul>
@@ -82,13 +85,13 @@
   </div>
   <div class="work-list stagger-children">
 
-    <div class="work-card anim-up" data-work="flux" data-image="images/works/image1.jpg" data-hero="images/detail/hero1.jpg" style="--stagger-delay:0s"><span class="work-idx">NO.1</span><div><h3 class="work-name">JingZhao737</h3><p class="work-medium">1280 &times; 720</p></div><div class="work-tags"><span class="tag">Abstract</span><span class="tag">Color Field</span></div><span class="work-year">2026</span></div>
+    <div class="work-card anim-up" data-work="flux" data-image="images/works/image1.webp" data-hero="images/detail/hero1.webp" style="--stagger-delay:0s"><span class="work-idx">NO.1</span><div><h3 class="work-name">JingZhao737</h3><p class="work-medium">1280 &times; 720</p></div><div class="work-tags"><span class="tag">Abstract</span><span class="tag">Color Field</span></div><span class="work-year">2026</span></div>
 
-    <div class="work-card anim-up" data-work="silence" data-image="images/works/image2.jpg" data-hero="images/detail/hero2.jpg" style="--stagger-delay:0.1s"><span class="work-idx">NO.2</span><div><h3 class="work-name">Star</h3><p class="work-medium">3440 &times; 2880</p></div><div class="work-tags"><span class="tag">Digital</span><span class="tag">Minimal</span></div><span class="work-year">2025</span></div>
+    <div class="work-card anim-up" data-work="silence" data-image="images/works/image2.jpg" data-hero="images/detail/hero2.webp" style="--stagger-delay:0.1s"><span class="work-idx">NO.2</span><div><h3 class="work-name">Star</h3><p class="work-medium">3440 &times; 2880</p></div><div class="work-tags"><span class="tag">Digital</span><span class="tag">Minimal</span></div><span class="work-year">2025</span></div>
 
-    <div class="work-card anim-up" data-work="neon" data-image="images/works/image3.jpg" data-hero="images/detail/hero3.jpg" style="--stagger-delay:0.2s"><span class="work-idx">NO.3</span><div><h3 class="work-name">Blade Runner</h3><p class="work-medium">2580 &times; 1080</p></div><div class="work-tags"><span class="tag">Installation</span><span class="tag">Light Art</span></div><span class="work-year">2024</span></div>
+    <div class="work-card anim-up" data-work="neon" data-image="images/works/image3.webp" data-hero="images/detail/hero3.webp" style="--stagger-delay:0.2s"><span class="work-idx">NO.3</span><div><h3 class="work-name">Blade Runner</h3><p class="work-medium">2580 &times; 1080</p></div><div class="work-tags"><span class="tag">Installation</span><span class="tag">Light Art</span></div><span class="work-year">2024</span></div>
 
-    <div class="work-card anim-up" data-work="tidal" data-image="images/works/image4.jpg" data-hero="images/detail/hero4.jpg" style="--stagger-delay:0.3s"><span class="work-idx">NO.4</span><div><h3 class="work-name">Breath</h3><p class="work-medium">2580 &times; 1080</p></div><div class="work-tags"><span class="tag">Projection</span><span class="tag">Site-Specific</span></div><span class="work-year">2023</span></div>
+    <div class="work-card anim-up" data-work="tidal" data-image="images/works/image4.webp" data-hero="images/detail/hero4.webp" style="--stagger-delay:0.3s"><span class="work-idx">NO.4</span><div><h3 class="work-name">Breath</h3><p class="work-medium">2580 &times; 1080</p></div><div class="work-tags"><span class="tag">Projection</span><span class="tag">Site-Specific</span></div><span class="work-year">2023</span></div>
 
   </div>
 </section>
@@ -129,24 +132,27 @@
   </div>
   <div class="showcase-grid">
     <div class="showcase-item anim-up" data-parallax="true">
-      <div class="showcase-bg" style="background-image:url(images/showcase/bg1.jpg)"></div>
+      <div class="showcase-bg" style="background-image:url(images/showcase/bg1.webp)"></div>
       <div class="showcase-overlay"></div>
       <div class="showcase-info">
         <p class="section-tag">Color Series &middot; 2024&ndash;2026</p>
+        <h3 class="showcase-title">Chromatic Flux</h3>
       </div>
     </div>
     <div class="showcase-item anim-up" data-parallax="true">
-      <div class="showcase-bg" style="background-image:url(images/showcase/bg2.jpg)"></div>
+      <div class="showcase-bg" style="background-image:url(images/showcase/bg2.webp)"></div>
       <div class="showcase-overlay"></div>
       <div class="showcase-info">
         <p class="section-tag">Generative Series &middot; 2025</p>
+        <h3 class="showcase-title">The Shape of Silence</h3>
       </div>
     </div>
     <div class="showcase-item anim-up" data-parallax="true">
-      <div class="showcase-bg" style="background-image:url(images/showcase/bg3.jpg)"></div>
+      <div class="showcase-bg" style="background-image:url(images/showcase/bg3.webp)"></div>
       <div class="showcase-overlay"></div>
       <div class="showcase-info">
         <p class="section-tag">Installation &middot; 2023&ndash;Present</p>
+        <h3 class="showcase-title">Neon Liturgy</h3>
       </div>
     </div>
   </div>
@@ -161,20 +167,29 @@
   <div class="motion-hero" id="motionHero">
     <div class="motion-carousel-track" id="motionTrack">
       <div class="motion-slide" data-index="0">
-        <video class="motion-slide-video" src="videos/reel2.mp4" poster="videos/cover.jpg" muted loop playsinline preload="metadata"></video>
+        <video class="motion-slide-video" src="videos/reel2.mp4" poster="videos/cover.webp" muted loop playsinline preload="none"></video>
         <div class="motion-slide-info"><h3>Ephemeral Light</h3></div>
       </div>
       <div class="motion-slide" data-index="1">
-        <video class="motion-slide-video" src="videos/reel1.mp4" poster="videos/cover.jpg" muted loop playsinline preload="metadata"></video>
+        <video class="motion-slide-video" src="videos/reel1.mp4" poster="videos/cover.webp" muted loop playsinline preload="none"></video>
         <div class="motion-slide-info"><h3>Raw Creation</h3></div>
       </div>
       <div class="motion-slide" data-index="2">
-        <video class="motion-slide-video" src="videos/reel3.mp4" poster="videos/cover.jpg" muted loop playsinline preload="metadata"></video>
+        <video class="motion-slide-video" src="videos/reel3.mp4" poster="videos/cover.webp" muted loop playsinline preload="none"></video>
         <div class="motion-slide-info"><h3>Quiet Craft</h3></div>
       </div>
     </div>
 
   </div>
+</section>
+
+<!-- ═════ POETRY MOSAIC ═════ -->
+<section class="section poetry-section" id="poetry">
+  <div class="poetry-header anim-up">
+    <p class="section-tag">Text Art</p>
+    <h2 class="section-heading">DO NOT GO GENTLE</h2>
+  </div>
+  <div class="poetry-grid" id="poetryGrid"></div>
 </section>
 
 <!-- ═════ ABOUT ═════ -->
@@ -234,7 +249,7 @@
 <!-- Work Detail Overlay -->
 <div class="work-detail" id="workDetail">
   <button class="detail-close" id="detailClose" aria-label="Close">&times;</button>
-  <div class="detail-hero"><img class="detail-hero-img" id="detailHeroImg" src="" alt=""><div class="detail-hero-content"><p class="section-tag" id="detailTag"></p><h1 id="detailTitle"></h1><p id="detailSubtitle"></p></div></div>
+  <div class="detail-hero"><div class="detail-hero-skeleton" id="detailHeroSkeleton"><div class="skeleton sk-tag"></div><div class="skeleton sk-title"></div><div class="skeleton sk-sub"></div></div><img class="detail-hero-img" id="detailHeroImg" src="" alt="" loading="lazy" decoding="async"><div class="detail-hero-content"><p class="section-tag" id="detailTag"></p><h1 id="detailTitle"></h1><p id="detailSubtitle"></p></div></div>
   <div class="detail-body">
     <div class="detail-meta" id="detailMeta"></div>
     <div id="detailContent"></div>
@@ -277,7 +292,23 @@
   </div>
 </div>
 
-<script src="app.js"></script>
+<script src="js/modules/data.js"></script>
+<script src="js/modules/theme.js"></script>
+<script src="js/modules/cursor.js"></script>
+<script src="js/modules/loader.js"></script>
+<script src="js/modules/nav.js"></script>
+<script src="js/modules/hover-preview.js"></script>
+<script src="js/modules/showcase.js"></script>
+<script src="js/modules/scroll-reveal.js"></script>
+<script src="js/modules/counter.js"></script>
+<script src="js/modules/poetry.js"></script>
+<script src="js/modules/work-detail.js"></script>
+<script src="js/modules/hash-router.js"></script>
+<script src="js/modules/motion-carousel.js"></script>
+<script src="js/modules/stars.js"></script>
+<script src="js/modules/hanging-circles.js"></script>
+<script src="js/modules/back-to-top.js"></script>
+<script src="js/modules/nav-waveform.js"></script>
 <script type="importmap">
 {
   "imports": {
@@ -287,5 +318,17 @@
 }
 </script>
 <script type="module" src="ice.js"></script>
+<div class="gallery-lightbox" id="galleryLightbox" aria-hidden="true">
+  <button class="lightbox-close" aria-label="Close">&times;</button>
+  <div class="lightbox-nav lightbox-nav-prev" aria-label="Previous"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg></div>
+  <div class="lightbox-nav lightbox-nav-next" aria-label="Next"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg></div>
+  <img class="lightbox-img" src="" alt="" loading="lazy" decoding="async">
+  <div class="lightbox-counter"></div>
+</div>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function() {});
+}
+</script>
 </body>
 </html>

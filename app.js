@@ -2,23 +2,20 @@
    PORTFOLIO — APP JS v8 · LATCH SYSTEM
    ═══════════════════════════════════════════ */
 
-console.log('APP JS v8 loaded');
-
-
 // ═══════════ THEME (global) ═══════════
-var isLight = false;
+let isLight = false;
 (function initTheme() {
   if (localStorage.getItem('theme') === 'light') {
     document.documentElement.classList.add('light');
     isLight = true;
   }
-  var btn = document.getElementById('themeToggle');
-  var wrapper = document.getElementById('themePullWrapper');
-  var stringEl = document.getElementById('themePullString');
+  let btn = document.getElementById('themeToggle');
+  let wrapper = document.getElementById('themePullWrapper');
+  let stringEl = document.getElementById('themePullString');
   if (!btn) return;
 
   // ── Web Audio API sound synth ──
-  var audioCtx = null;
+  let audioCtx = null;
   function initAudio() {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -27,9 +24,9 @@ var isLight = false;
   }
   function playTick(rate, vol) {
     if (!audioCtx) return;
-    var t = audioCtx.currentTime;
-    var osc = audioCtx.createOscillator();
-    var gain = audioCtx.createGain();
+    let t = audioCtx.currentTime;
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(2800 * rate, t);
     osc.frequency.exponentialRampToValueAtTime(400 * rate, t + 0.06);
@@ -41,15 +38,15 @@ var isLight = false;
   function playClick() { playTick(1, 0.15); }
   function playBounce() { playTick(0.65, 0.08); }
 
-  var dragEnd = 40;
-  var threshold = 60;
-  var maxPull = 100;
-  var resistance = 0.2;
-  var dragging = false, startY = 0, pullY = 0, toggled = false;
-  var inMotion = false;
+  let dragEnd = 40;
+  let threshold = 60;
+  let maxPull = 100;
+  let resistance = 0.2;
+  let dragging = false, startY = 0, pullY = 0, toggled = false;
+  let inMotion = false;
 
   function setPull(v) {
-    var raw = Math.max(0, v);
+    let raw = Math.max(0, v);
     if (raw <= dragEnd) {
       pullY = raw;
     } else {
@@ -92,7 +89,7 @@ var isLight = false;
   }
 
   function bounceBack() {
-    var bounceY = pullY;
+    let bounceY = pullY;
     inMotion = true;
     // Animate back with a nice spring — overshoot then settle
     wrapper.style.transition = 'transform .65s cubic-bezier(.34,1.56,.64,1)';
@@ -132,8 +129,8 @@ var isLight = false;
   function onMove(e) {
     if (!dragging) return;
     e.preventDefault();
-    var y = e.touches ? e.touches[0].clientY : e.clientY;
-    var dy = y - startY;
+    let y = e.touches ? e.touches[0].clientY : e.clientY;
+    let dy = y - startY;
     setPull(dy);
   }
 
@@ -161,7 +158,7 @@ var isLight = false;
 })();
 
 
-var workData = {
+let workData = {
   flux: {
     name: 'JingZhao737', tag: 'Abstract \u00b7 Color Field',
     subtitle: 'Oil on canvas. An exploration of chromatic tension and release.',
@@ -208,10 +205,18 @@ var workData = {
   }
 };
 
+// ═══════════ WORK HERO MAP (slug → hero image) ═══════════
+let workHeroMap = {
+  flux: 'images/works/hero1.jpg',
+  silence: 'images/works/hero2.jpg',
+  neon: 'images/works/hero3.jpg',
+  tidal: 'images/works/hero4.jpg'
+};
+
 // ═══════════ CURSOR ═══════════
-var cursorDot = document.getElementById('cursorDot');
-var cursorRing = document.getElementById('cursorRing');
-var mouseX = 0, mouseY = 0, cX = 0, cY = 0, rX = 0, rY = 0;
+let cursorDot = document.getElementById('cursorDot');
+let cursorRing = document.getElementById('cursorRing');
+let mouseX = 0, mouseY = 0, cX = 0, cY = 0, rX = 0, rY = 0;
 
 document.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; });
 document.addEventListener('mouseleave', function() { cursorDot.style.opacity = '0'; cursorRing.style.opacity = '0'; });
@@ -232,17 +237,17 @@ document.querySelectorAll('a, .work-card, .footer-cta, .detail-close, button').f
 
 // ═══════════ LOADING ═══════════
 (function() {
-  var numEl = document.getElementById('loaderNumber');
-  var bar = document.getElementById('loaderBar');
-  var loaderEl = document.getElementById('loader');
+  let numEl = document.getElementById('loaderNumber');
+  let bar = document.getElementById('loaderBar');
+  let loaderEl = document.getElementById('loader');
   if (!numEl || !loaderEl) { revealCrescent(); if (loaderEl) loaderEl.style.display = 'none'; document.body.style.cursor = 'none'; return; }
 
-  var total = 50, count = 0;
-  var iv = setInterval(function() {
+  let total = 50, count = 0;
+  let iv = setInterval(function() {
     count++;
-    var raw = count / total;
-    var eased = 1 - Math.pow(1 - raw, 3);
-    var num = Math.floor(eased * 100);
+    let raw = count / total;
+    let eased = 1 - Math.pow(1 - raw, 3);
+    let num = Math.floor(eased * 100);
     numEl.innerHTML = num + '<span class="pct">%</span>';
     if (bar) bar.style.width = (eased * 100) + '%';
 
@@ -266,19 +271,19 @@ document.querySelectorAll('a, .work-card, .footer-cta, .detail-close, button').f
 })();
 
 // ═══════════ NAVIGATION ═══════════
-var nav = document.getElementById('nav'), navLinks = document.querySelectorAll('.nav-links a');
-var pageTransition = document.getElementById('pageTransition'), workDetail = document.getElementById('workDetail');
+let nav = document.getElementById('nav'), navLinks = document.querySelectorAll('.nav-links a');
+let pageTransition = document.getElementById('pageTransition'), workDetail = document.getElementById('workDetail');
 
 new IntersectionObserver(function(entries) {
   entries.forEach(function(e) { if (e.isIntersecting) nav.classList.remove('scrolled'); else nav.classList.add('scrolled'); });
 }, { threshold: [0, 0.1] }).observe(document.getElementById('home'));
 
-['home', 'work', 'showcase', 'motion', 'about'].forEach(function(id) {
-  var el = document.getElementById(id); if (!el) return;
+['home', 'work', 'showcase', 'motion', 'poetry', 'about'].forEach(function(id) {
+  let el = document.getElementById(id); if (!el) return;
   new IntersectionObserver(function(entries) {
     if (entries[0].isIntersecting) {
       navLinks.forEach(function(a) { a.classList.remove('active'); });
-      var link = document.querySelector('.nav-links a[data-link="' + id + '"]');
+      let link = document.querySelector('.nav-links a[data-link="' + id + '"]');
       if (link) link.classList.add('active');
     }
   }, { threshold: 0.3, rootMargin: '-20% 0px -60% 0px' }).observe(el);
@@ -287,9 +292,9 @@ new IntersectionObserver(function(entries) {
 document.querySelectorAll('a[data-link]').forEach(function(a) {
   a.addEventListener('click', function(e) {
     e.preventDefault();
-    var target = document.getElementById(a.dataset.link); if (!target) return;
+    let target = document.getElementById(a.dataset.link); if (!target) return;
     pageTransition.classList.add('active'); setTimeout(function() { pageTransition.classList.remove('active'); }, 1000);
-    var top = a.dataset.link === 'home' ? 0 : target.getBoundingClientRect().top + window.scrollY - 80;
+    let top = a.dataset.link === 'home' ? 0 : target.getBoundingClientRect().top + window.scrollY - 80;
     window.scrollTo({ top: top, behavior: 'smooth' });
     if (workDetail.classList.contains('open')) closeDetail();
   });
@@ -298,17 +303,17 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
 // ═══════════ HOVER PREVIEW (desktop only) ═══════════
 (function() {
   if ('ontouchstart' in window) return;
-  var imgs = [], activeImg = null, targetX = 0, targetY = 0, currentX = 0, currentY = 0;
+  let imgs = [], activeImg = null, targetX = 0, targetY = 0, currentX = 0, currentY = 0;
 
   document.querySelectorAll('.work-card').forEach(function(card) {
-    var img = document.createElement('img');
-    img.className = 'work-preview'; img.src = card.dataset.image; img.alt = ''; img.draggable = false;
+    let img = document.createElement('img');
+    img.className = 'work-preview'; img.src = card.dataset.image; img.alt = ''; img.draggable = false; img.loading = 'lazy'; img.decoding = 'async';
     document.body.appendChild(img);
     imgs.push({ card: card, img: img });
 
     card.addEventListener('mouseenter', function() {
       activeImg = img;
-      for (var j = 0; j < imgs.length; j++) imgs[j].img.classList.remove('visible');
+      for (let j = 0; j < imgs.length; j++) imgs[j].img.classList.remove('visible');
       img.classList.add('visible');
       currentX = targetX; currentY = targetY;
     });
@@ -323,7 +328,7 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
 
   (function animateHover() {
     if (activeImg) {
-      var dx = targetX - currentX, dy = targetY - currentY;
+      let dx = targetX - currentX, dy = targetY - currentY;
       currentX += dx * 0.12; currentY += dy * 0.12;
       activeImg.style.left = currentX + 'px'; activeImg.style.top = currentY + 'px';
     }
@@ -333,13 +338,13 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
 
 // ═══════════ PARALLAX SHOWCASE — hover tilt + drag + spring return ═══════════
 (function() {
-  var items = document.querySelectorAll('.showcase-item[data-parallax]');
+  let items = document.querySelectorAll('.showcase-item[data-parallax]');
   if (items.length === 0) return;
 
-  var states = [];
-  var activeDrag = null; // which state is being dragged
-  for (var i = 0; i < items.length; i++) {
-    var bg = items[i].querySelector('.showcase-bg');
+  let states = [];
+  let activeDrag = null; // which state is being dragged
+  for (let i = 0; i < items.length; i++) {
+    let bg = items[i].querySelector('.showcase-bg');
     if (!bg) continue;
     states.push({ el: bg, item: items[i], tx: 0, ty: 0, stx: 0, sty: 0, cx: 0, cy: 0, vx: 0, vy: 0, hover: false, dx: 0, dy: 0 });
   }
@@ -348,16 +353,19 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
     return mx >= rect.left && mx <= rect.right && my >= rect.top && my <= rect.bottom;
   }
 
+  let lastMouseX = 0, lastMouseY = 0;
   document.addEventListener('mousemove', function(e) {
-    var mx = e.clientX, my = e.clientY;
-    for (var i = 0; i < states.length; i++) {
-      var s = states[i];
-      var rect = s.item.getBoundingClientRect();
-      var inside = isInside(rect, mx, my);
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+    let mx = e.clientX, my = e.clientY;
+    for (let i = 0; i < states.length; i++) {
+      let s = states[i];
+      let rect = s.item.getBoundingClientRect();
+      let inside = isInside(rect, mx, my);
       s.hover = inside;
       if (inside) {
-        var relX = (mx - rect.left) / rect.width - 0.5;
-        var relY = (my - rect.top) / rect.height - 0.5;
+        let relX = (mx - rect.left) / rect.width - 0.5;
+        let relY = (my - rect.top) / rect.height - 0.5;
         s.stx = relX * 30;
         s.sty = relY * 28;
       } else {
@@ -367,19 +375,19 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
     }
     // Drag
     if (activeDrag) {
-      var s = activeDrag;
-      var rawX = mx - s.startX, rawY = my - s.startY;
+      let s = activeDrag;
+      let rawX = mx - s.startX, rawY = my - s.startY;
       // Progressive resistance — harder to drag the farther you go
-      var mag = Math.sqrt(rawX * rawX + rawY * rawY);
-      var factor = mag > 50 ? 1 / (1 + (mag - 50) * 0.015) : 1;
+      let mag = Math.sqrt(rawX * rawX + rawY * rawY);
+      let factor = mag > 50 ? 1 / (1 + (mag - 50) * 0.015) : 1;
       s.dx = rawX * factor;
       s.dy = rawY * factor;
     }
   });
 
   document.addEventListener('mousedown', function(e) {
-    for (var i = 0; i < states.length; i++) {
-      var rect = states[i].item.getBoundingClientRect();
+    for (let i = 0; i < states.length; i++) {
+      let rect = states[i].item.getBoundingClientRect();
       if (isInside(rect, e.clientX, e.clientY)) {
         activeDrag = states[i];
         activeDrag.startX = e.clientX - activeDrag.dx;
@@ -395,14 +403,26 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
   });
 
   (function loop() {
-    for (var i = 0; i < states.length; i++) {
-      var s = states[i];
-      var rect = s.item.getBoundingClientRect();
-      var vh = window.innerHeight;
+    for (let i = 0; i < states.length; i++) {
+      let s = states[i];
+      let rect = s.item.getBoundingClientRect();
+      let vh = window.innerHeight;
       if (rect.bottom < -200 || rect.top > vh + 200) continue;
+      // Recalculate stx/sty every frame (fixes tilt lost on scroll)
+      let inside = isInside(rect, lastMouseX, lastMouseY);
+      s.hover = inside;
+      if (inside) {
+        let relX = (lastMouseX - rect.left) / rect.width - 0.5;
+        let relY = (lastMouseY - rect.top) / rect.height - 0.5;
+        s.stx = relX * 30;
+        s.sty = relY * 28;
+      } else {
+        s.stx = 0;
+        s.sty = 0;
+      }
       // Drag spring return to 0 when not actively dragging
       if (s !== activeDrag) {
-        var dk = 0.1, ddamp = 0.74;
+        let dk = 0.1, ddamp = 0.74;
         s.vx += (0 - s.dx) * dk;
         s.vy += (0 - s.dy) * dk;
         s.vx *= ddamp;
@@ -417,23 +437,23 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
       s.tx += (s.stx - s.tx) * 0.22;
       s.ty += (s.sty - s.ty) * 0.22;
       // Hover spring — smooth, no bounce
-      var k = 0.06, damp = 0.88;
+      let k = 0.06, damp = 0.88;
       s.cx += (s.tx - s.cx) * k;
       s.cy += (s.ty - s.cy) * k;
       s.cx *= damp;
       s.cy *= damp;
-      var totalX = s.cx + s.dx;
-      var totalY = s.cy + s.dy;
+      let totalX = s.cx + s.dx;
+      let totalY = s.cy + s.dy;
       // Snap when settled near 0
       if (s.stx === 0 && s.sty === 0 && s.dx === 0 && s.dy === 0 && Math.abs(s.cx) < 0.08 && Math.abs(s.cy) < 0.08) {
         s.cx = 0; s.cy = 0;
         s.item.style.transform = 'perspective(1000px) rotateX(0)';
       }
-      var d = Math.sqrt(totalX * totalX + totalY * totalY);
-      var scale = 1 + d * 0.004;
+      let d = Math.sqrt(totalX * totalX + totalY * totalY);
+      let scale = 1 + d * 0.004;
       s.el.style.transform = 'translate(' + totalX + 'px,' + totalY + 'px) scale(' + scale + ')';
-      // Tilt from hover only, not from drag (only vertical tilt, large angle)
-      var rx = s.cy * 2.2;
+      // Tilt from hover — mouse side sinks in (depressed)
+      let rx = -(s.cy * 4.5);
       s.item.style.transform = 'perspective(1000px) rotateX(' + rx + 'deg)';
     }
     requestAnimationFrame(loop);
@@ -441,13 +461,13 @@ document.querySelectorAll('a[data-link]').forEach(function(a) {
 })();
 
 // ═══════════ SCROLL REVEAL ═══════════
-var revealObserver = new IntersectionObserver(function(entries) {
+let revealObserver = new IntersectionObserver(function(entries) {
   entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('anim-done'); });
 }, { threshold: 0.04, rootMargin: '0px 0px -16px 0px' });
 document.querySelectorAll('.anim-up').forEach(function(el) { revealObserver.observe(el); });
 
 // ═══════════ FOOTER CTA REVEAL ═══════════
-var footerCta = document.getElementById('footerCta');
+let footerCta = document.getElementById('footerCta');
 if (footerCta) {
   new IntersectionObserver(function(entries) {
     if (entries[0].isIntersecting) footerCta.classList.add('revealed');
@@ -455,16 +475,16 @@ if (footerCta) {
 }
 
 // ═══════════ COUNTER ANIMATION ═══════════
-var counterObserver = new IntersectionObserver(function(entries) {
+let counterObserver = new IntersectionObserver(function(entries) {
   entries.forEach(function(entry) {
     if (entry.isIntersecting) {
-      var el = entry.target; if (el._counted) return; el._counted = true;
-      var target = parseInt(el.dataset.count, 10);
-      var suffixEl = el.querySelector('span'), suffix = suffixEl ? suffixEl.textContent : '';
-      var duration = 1600, start = null;
+      let el = entry.target; if (el._counted) return; el._counted = true;
+      let target = parseInt(el.dataset.count, 10);
+      let suffixEl = el.querySelector('span'), suffix = suffixEl ? suffixEl.textContent : '';
+      let duration = 1600, start = null;
       (function step(ts) {
         if (!start) start = ts;
-        var progress = Math.min((ts - start) / duration, 1), eased = 1 - Math.pow(1 - progress, 4);
+        let progress = Math.min((ts - start) / duration, 1), eased = 1 - Math.pow(1 - progress, 4);
         el.innerHTML = Math.round(eased * target) + suffix;
         if (progress < 1) requestAnimationFrame(step);
       })(0);
@@ -473,67 +493,443 @@ var counterObserver = new IntersectionObserver(function(entries) {
 }, { threshold: 0.4 });
 document.querySelectorAll('.stat-num[data-count]').forEach(function(el) { counterObserver.observe(el); });
 
+// ═══════════ POETRY MOSAIC ═══════════
+(function() {
+  const grid = document.getElementById('poetryGrid');
+  if (!grid) return;
+  const text = "Do not go gentle into that good night. Rage, rage against the dying of the light.";
+  const chars = text.split('');
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    if (ch === ' ') {
+      // Render space as a subtle empty card
+      const card = document.createElement('div');
+      card.className = 'poetry-card poetry-space anim-up';
+      card.innerHTML = '<span class="poetry-char">&nbsp;</span>';
+      card.style.setProperty('--stagger-delay', (i * 0.015) + 's');
+      grid.appendChild(card);
+    } else {
+      const card = document.createElement('div');
+      card.className = 'poetry-card anim-up';
+      card.innerHTML = '<span class="poetry-char">' + ch + '</span>';
+      card.style.setProperty('--stagger-delay', (i * 0.015) + 's');
+      grid.appendChild(card);
+    }
+  }
+  // Trigger stagger animation via IntersectionObserver
+  const obs = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting) {
+      const cards = grid.querySelectorAll('.poetry-card');
+      cards.forEach(function(c, i) {
+        setTimeout(function() { c.classList.add('anim-done'); }, i * 15);
+      });
+      obs.disconnect();
+    }
+  }, { threshold: 0.2 });
+  obs.observe(grid);
+
+  // ── Proximity-based 3D tilt + color (exponential smooth, no jitter) ──
+  const cards = Array.from(grid.querySelectorAll('.poetry-card'));
+  if (!cards.length) return;
+
+  const CARD_SIZE = 64;
+  const THRESHOLD = CARD_SIZE * 1.8;
+
+  // Per-card current rendered state (exponential moving average toward target)
+  const state = cards.map(() => ({ e: 0, rx: 0, ry: 0 }));
+  let targetE = cards.map(() => 0);
+  let targetRX = cards.map(() => 0);
+  let targetRY = cards.map(() => 0);
+
+  const SPEED_COLOR = 0.06;   // color/shadow follow speed (slower → more delay)
+  const SPEED_TILT = 0.12;    // tilt follow speed (slower → more delay)
+  const SPEED_RESET = 0.04;   // reset speed when mouse leaves (slower → longer fade out)
+
+  let running = false;
+
+  grid.addEventListener('mousemove', function(e) {
+    cards.forEach(function(card, i) {
+      const rect = card.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const t = Math.max(0, 1 - dist / THRESHOLD);
+      targetE[i] = t * t;
+      targetRX[i] = -(dy / (rect.height / 2)) * targetE[i] * 28;
+      targetRY[i] = (dx / (rect.width / 2)) * targetE[i] * 22;
+    });
+    if (!running) { running = true; smoothLoop(); }
+  });
+
+  grid.addEventListener('mouseleave', function() {
+    for (let i = 0; i < cards.length; i++) {
+      targetE[i] = 0;
+      targetRX[i] = 0;
+      targetRY[i] = 0;
+    }
+    if (!running) { running = true; smoothLoop(); }
+  });
+
+  function smoothLoop() {
+    let anyActive = false;
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      const s = state[i];
+
+      // Exponential moving average toward target
+      const spd = targetE[i] > 0.01 ? SPEED_COLOR : SPEED_RESET;
+      s.e += (targetE[i] - s.e) * spd;
+      s.rx += (targetRX[i] - s.rx) * SPEED_TILT;
+      s.ry += (targetRY[i] - s.ry) * SPEED_TILT;
+
+      const e = s.e;
+      if (e < 0.0005 && targetE[i] === 0) { s.e = 0; s.rx = 0; s.ry = 0; }
+
+      if (s.e < 0.0005) {
+        card.style.background = '';
+        card.style.borderColor = '';
+        card.style.boxShadow = '';
+        card.style.transform = '';
+        card.classList.remove('active');
+        const ch = card.querySelector('.poetry-char');
+        if (ch) { ch.style.color = ''; ch.style.transform = ''; ch.style.filter = ''; }
+        continue;
+      }
+
+      anyActive = true;
+      const re = s.e;
+
+      // Color blend
+      card.style.background = 'rgb(' + Math.round(16 + re * 239) + ',' + Math.round(20 + re * 121) + ',' + Math.round(25 + re * 65) + ')';
+      card.style.borderColor = 'rgb(' + Math.round(38 + re * 217) + ',' + Math.round(38 + re * 134) + ',' + Math.round(42 + re * 78) + ')';
+      card.style.boxShadow = '0 ' + (4 + re * 16).toFixed(1) + 'px ' + (10 + re * 30).toFixed(1) + 'px rgba(212,108,60,' + (re * 0.35).toFixed(2) + ')';
+      card.style.transform = 'perspective(300px) rotateX(' + s.rx.toFixed(2) + 'deg) rotateY(' + s.ry.toFixed(2) + 'deg) translateZ(' + (re * 6).toFixed(1) + 'px) scale(' + (1 + re * 0.2).toFixed(2) + ')';
+      card.classList.add('active');
+
+      const ch = card.querySelector('.poetry-char');
+      if (ch) {
+        ch.style.color = re > 0.5 ? '#fff' : '';
+        ch.style.transform = 'scale(' + (1 + re * 0.3).toFixed(2) + ')';
+        ch.style.filter = re > 0.3 ? 'drop-shadow(0 0 ' + (re * 12).toFixed(0) + 'px rgba(255,255,255,' + (re * 0.5).toFixed(2) + '))' : 'none';
+      }
+    }
+    // Only keep looping while cards are active (energy saving when idle)
+    if (anyActive) requestAnimationFrame(smoothLoop);
+    else running = false;
+  }
+})();
+
 // ═══════════ WORK DETAIL ═══════════
 document.querySelectorAll('.work-card').forEach(function(card) {
-  card.addEventListener('click', function() {
-    var key = this.dataset.work; if (!workData[key]) return;
-    openDetail(workData[key], this.dataset.hero);
+  // Keyboard accessibility
+  card.setAttribute('role', 'button');
+  card.setAttribute('tabindex', '0');
+
+  function openCard() {
+    let key = card.dataset.work; if (!workData[key]) return;
+    let data = Object.assign({ slug: key }, workData[key]);
+    openDetail(data, card.dataset.hero);
+  }
+
+  card.addEventListener('click', openCard);
+  card.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openCard();
+    }
   });
 });
 
-function openDetail(data, heroImg) {
-  pageTransition.classList.add('active'); setTimeout(function() { pageTransition.classList.remove('active'); }, 1000);
+// ═══════════ HASH ROUTER ═══════════
+const ROUTE_PREFIX = '#/work/';
+let detailOpenedFromHash = false;
+let savedScrollY = 0;
+
+function buildGalleryHTML(gallery) {
+  if (!gallery || !gallery.length) return '';
+  // Determine layout class based on count
+  let layoutClass = '';
+  if (gallery.length === 1) layoutClass = 'layout-1';
+  else if (gallery.length === 2) layoutClass = 'layout-2';
+  else if (gallery.length === 3) layoutClass = 'layout-3';
+  else if (gallery.length === 4) layoutClass = 'layout-4';
+  else if (gallery.length === 5) layoutClass = 'layout-5';
+  else layoutClass = 'layout-masonry';
+
+  let html = '<div class="detail-gallery ' + layoutClass + '">';
+  for (let i = 0; i < gallery.length; i++) {
+    const item = gallery[i];
+    const src = typeof item === 'string' ? item : item.src;
+    const caption = typeof item === 'string' ? '' : (item.caption || '');
+    const desc = typeof item === 'string' ? '' : (item.desc || '');
+    html += '<div class="gal-item" data-index="' + i + '">';
+    html += '<div class="skeleton"></div>';
+    html += '<img src="' + src + '" alt="' + (caption || 'gallery image') + '" loading="lazy" onload="this.classList.add(\'loaded\');this.previousElementSibling.style.display=\'none\'">';
+    if (caption) html += '<div class="gal-caption"><div class="gal-caption-title">' + caption + '</div>' + (desc ? '<div class="gal-caption-desc">' + desc + '</div>' : '') + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderDetailContent(data, heroImg) {
   document.getElementById('detailTag').textContent = data.tag;
   document.getElementById('detailTitle').textContent = data.name;
   document.getElementById('detailSubtitle').textContent = data.subtitle;
-  document.getElementById('detailHeroImg').src = heroImg;
+  // Hero with skeleton
+  const heroEl = document.getElementById('detailHeroImg');
+  const heroSkeleton = document.getElementById('detailHeroSkeleton');
+  if (heroSkeleton) { heroSkeleton.classList.remove('hidden'); }
+  heroEl.onload = function() {
+    if (heroSkeleton) { heroSkeleton.classList.add('hidden'); }
+  };
+  heroEl.src = heroImg;
   document.getElementById('detailMeta').innerHTML = Object.keys(data.meta).map(function(k) {
     return '<div class="detail-meta-item"><span class="detail-meta-label">' + k + '</span><span class="detail-meta-value">' + data.meta[k] + '</span></div>';
   }).join('');
   document.getElementById('detailContent').innerHTML = data.content.map(function(s) {
     return '<h2>' + s.h2 + '</h2><p>' + s.p + '</p>';
   }).join('');
-  document.getElementById('detailGallery').innerHTML = data.gallery.map(function(src) {
-    return '<img src="' + src + '" alt="" loading="lazy">';
-  }).join('');
+  document.getElementById('detailGallery').innerHTML = buildGalleryHTML(data.gallery);
+}
+
+function openDetail(data, heroImg, pushState) {
+  if (pushState === undefined) pushState = true;
+  savedScrollY = window.scrollY;
+  if (pushState && data.slug) {
+    history.pushState({ work: data.slug }, '', ROUTE_PREFIX + data.slug);
+  }
+  renderDetailContent(data, heroImg);
+  pageTransition.classList.add('active'); setTimeout(function() { pageTransition.classList.remove('active'); }, 1000);
   document.body.style.overflow = 'hidden'; workDetail.style.display = 'block'; workDetail.scrollTop = 0;
-  requestAnimationFrame(function() { workDetail.classList.add('open'); });
+  requestAnimationFrame(function() {
+    workDetail.classList.add('open');
+    // Init lightbox click handlers
+    initGalleryLightbox();
+  });
 }
 
-function closeDetail() {
+function closeDetail(popState) {
   workDetail.classList.remove('open');
-  setTimeout(function() { workDetail.style.display = 'none'; document.body.style.overflow = ''; }, 700);
+  if (popState) {
+    history.replaceState(null, '', ' ' + window.location.pathname + location.hash.replace(ROUTE_PREFIX, '#work'));
+  }
+  setTimeout(function() {
+    workDetail.style.display = 'none'; document.body.style.overflow = '';
+    window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+  }, 700);
 }
 
-document.getElementById('detailClose').addEventListener('click', closeDetail);
+// Lightbox
+let lightboxIndex = 0, lightboxItems = [];
+
+function initGalleryLightbox() {
+  const items = workDetail.querySelectorAll('.gal-item');
+  items.forEach(function(item, idx) {
+    item.onclick = function() { openLightbox(idx); };
+  });
+}
+
+function openLightbox(index) {
+  const items = workDetail.querySelectorAll('.gal-item img');
+  lightboxItems = Array.from(items).map(img => img.src);
+  lightboxIndex = index;
+  const lb = document.getElementById('galleryLightbox');
+  if (!lb) return;
+  lb.querySelector('.lightbox-img').src = lightboxItems[index];
+  lb.querySelector('.lightbox-counter').textContent = (index + 1) + ' / ' + lightboxItems.length;
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('galleryLightbox');
+  if (!lb) return;
+  lb.classList.remove('open');
+  if (!workDetail.classList.contains('open')) document.body.style.overflow = '';
+}
+
+function lightboxPrev() {
+  if (lightboxItems.length === 0) return;
+  lightboxIndex = (lightboxIndex - 1 + lightboxItems.length) % lightboxItems.length;
+  const lb = document.getElementById('galleryLightbox');
+  lb.querySelector('.lightbox-img').src = lightboxItems[lightboxIndex];
+  lb.querySelector('.lightbox-counter').textContent = (lightboxIndex + 1) + ' / ' + lightboxItems.length;
+}
+
+function lightboxNext() {
+  if (lightboxItems.length === 0) return;
+  lightboxIndex = (lightboxIndex + 1) % lightboxItems.length;
+  const lb = document.getElementById('galleryLightbox');
+  lb.querySelector('.lightbox-img').src = lightboxItems[lightboxIndex];
+  lb.querySelector('.lightbox-counter').textContent = (lightboxIndex + 1) + ' / ' + lightboxItems.length;
+}
+
+// Hash router event listeners
+window.addEventListener('popstate', function(e) {
+  const hash = window.location.hash;
+  if (hash.startsWith(ROUTE_PREFIX) && e.state && e.state.work) {
+    const slug = e.state.work;
+    const data = workData[slug];
+    if (data) {
+      const dataWithSlug = Object.assign({ slug: slug }, data);
+      const heroImg = workHeroMap[slug] || (data.gallery && data.gallery.length ? (typeof data.gallery[0] === 'string' ? data.gallery[0] : data.gallery[0].src) : '');
+      openDetail(dataWithSlug, heroImg, false);
+    }
+  } else if (workDetail.classList.contains('open')) {
+    closeDetail(false);
+  }
+});
+
+// Check URL on page load
+window.addEventListener('load', function() {
+  const hash = window.location.hash;
+  if (hash.startsWith(ROUTE_PREFIX)) {
+    const slug = hash.slice(ROUTE_PREFIX.length);
+    const data = workData[slug];
+    if (data) {
+      const dataWithSlug = Object.assign({ slug: slug }, data);
+      const heroImg = workHeroMap[slug] || (data.gallery && data.gallery.length ? (typeof data.gallery[0] === 'string' ? data.gallery[0] : data.gallery[0].src) : '');
+      setTimeout(function() { openDetail(dataWithSlug, heroImg, false); }, 500);
+    }
+  }
+});
+
+document.getElementById('detailClose').addEventListener('click', function() { closeDetail(true); });
+
+// Lightbox bindings — run after DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+  const lbClose = document.querySelector('.lightbox-close');
+  const lbPrev = document.querySelector('.lightbox-nav-prev');
+  const lbNext = document.querySelector('.lightbox-nav-next');
+  const lb = document.querySelector('.gallery-lightbox');
+  if (lbClose) lbClose.addEventListener('click', closeLightbox);
+  if (lbPrev) lbPrev.addEventListener('click', lightboxPrev);
+  if (lbNext) lbNext.addEventListener('click', lightboxNext);
+  if (lb) lb.addEventListener('click', function(e) { if (e.target === e.currentTarget) closeLightbox(); });
+});
+
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && workDetail.classList.contains('open')) closeDetail();
+  const lb = document.getElementById('galleryLightbox');
+  if (lb && lb.classList.contains('open')) {
+    if (e.key === 'Escape') { closeLightbox(); return; }
+    if (e.key === 'ArrowLeft') { lightboxPrev(); return; }
+    if (e.key === 'ArrowRight') { lightboxNext(); return; }
+    return;
+  }
+  if (e.key === 'Escape' && workDetail.classList.contains('open')) { closeDetail(true); return; }
   if (workDetail.classList.contains('open')) return;
   if (e.key === 'ArrowDown') { e.preventDefault(); window.scrollBy({ top: window.innerHeight * 0.7, behavior: 'smooth' }); }
   if (e.key === 'ArrowUp') { e.preventDefault(); window.scrollBy({ top: -window.innerHeight * 0.7, behavior: 'smooth' }); }
 });
+
+// Pinch zoom for lightbox (mobile)
+(function() {
+  const lb = document.getElementById('galleryLightbox');
+  if (!lb) return;
+  const img = lb.querySelector('.lightbox-img');
+  if (!img) return;
+  let startDist = 0, startScale = 1, currentScale = 1;
+  let offsetX = 0, offsetY = 0, startOffsetX = 0, startOffsetY = 0;
+  let isPinching = false;
+  const MIN_SCALE = 1, MAX_SCALE = 4;
+
+  function getDist(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  function applyTransform() {
+    img.style.transform = 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' + currentScale + ')';
+    img.style.transition = isPinching ? 'none' : 'transform .35s var(--ease-out-expo)';
+  }
+
+  function resetZoom() {
+    currentScale = 1; offsetX = 0; offsetY = 0;
+    img.style.transition = 'transform .35s var(--ease-out-expo)';
+    applyTransform();
+  }
+
+  // Reset on close
+  lb.addEventListener('click', function(e) {
+    if (e.target === e.currentTarget || e.target.classList.contains('lightbox-close')) {
+      resetZoom();
+    }
+  });
+  document.querySelector('.lightbox-close').addEventListener('click', resetZoom);
+
+  img.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      isPinching = true;
+      startDist = getDist(e.touches);
+      startScale = currentScale;
+      startOffsetX = offsetX;
+      startOffsetY = offsetY;
+    }
+  }, { passive: false });
+
+  img.addEventListener('touchmove', function(e) {
+    if (e.touches.length !== 2 || !isPinching) return;
+    e.preventDefault();
+    const dist = getDist(e.touches);
+    currentScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, startScale * (dist / startDist)));
+    // Keep offset proportional
+    offsetX = startOffsetX * (currentScale / startScale);
+    offsetY = startOffsetY * (currentScale / startScale);
+    applyTransform();
+  }, { passive: false });
+
+  img.addEventListener('touchend', function(e) {
+    if (!isPinching) return;
+    isPinching = false;
+    if (e.touches.length < 2) {
+      if (currentScale < 1.05) resetZoom();
+    }
+  });
+
+  // Double-tap to toggle zoom
+  let lastTap = 0;
+  img.addEventListener('click', function(e) {
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      e.preventDefault();
+      if (currentScale > 1.5) resetZoom();
+      else { currentScale = 2.5; offsetX = 0; offsetY = 0; applyTransform(); }
+    }
+    lastTap = now;
+  });
+
+  // Close/reset on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && currentScale > 1) { resetZoom(); }
+  });
+})();
 workDetail.addEventListener('wheel', function(e) {
   e.stopPropagation();
-  var atTop = workDetail.scrollTop <= 0, atBottom = workDetail.scrollTop + workDetail.clientHeight >= workDetail.scrollHeight - 2;
+  let atTop = workDetail.scrollTop <= 0, atBottom = workDetail.scrollTop + workDetail.clientHeight >= workDetail.scrollHeight - 2;
   if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) e.preventDefault();
 }, { passive: false });
 
 // ═══════════ MOTION / VIDEO CAROUSEL ═══════════
 (function() {
-  var hero = document.getElementById('motionHero');
-  var track = document.getElementById('motionTrack');
+  let hero = document.getElementById('motionHero');
+  let track = document.getElementById('motionTrack');
   if (!track || !hero) return;
-  var slides = track.querySelectorAll('.motion-slide');
-  var videos = track.querySelectorAll('video');
-  var current = 0, total = slides.length;
-  var isDragging = false, startX = 0, dragged = false;
+  let slides = track.querySelectorAll('.motion-slide');
+  let videos = track.querySelectorAll('video');
+  let current = 0, total = slides.length;
+  let isDragging = false, startX = 0, dragged = false;
 
   // offset = (i - current + total) % total, then wrap to [-floor(total/2), floor(total/2)]
   function applyOffsets() {
-    for (var i = 0; i < total; i++) {
-      var raw = (i - current + total) % total;
+    for (let i = 0; i < total; i++) {
+      let raw = (i - current + total) % total;
       // Map to nearest: if raw > total/2 then raw - total for negative side
-      var offset = raw > total / 2 ? raw - total : raw;
+      let offset = raw > total / 2 ? raw - total : raw;
       slides[i].setAttribute('data-offset', offset);
     }
   }
@@ -554,35 +950,35 @@ workDetail.addEventListener('wheel', function(e) {
   }
 
   function playCurrent() {
-    for (var j = 0; j < videos.length; j++) {
+    for (let j = 0; j < videos.length; j++) {
       if (j === current) { videos[j].currentTime = 0; videos[j].play().catch(function(){}); }
       else { videos[j].pause(); videos[j].currentTime = 0; }
     }
   }
 
   // Video ended -> auto next
-  for (var v = 0; v < videos.length; v++) {
+  for (let v = 0; v < videos.length; v++) {
     videos[v].addEventListener('ended', function() {
       next();
     });
   }
 
   // Drag / swipe — right-to-left drag = next(), left-to-right = prev()
-  var onDown = function(e) {
+  let onDown = function(e) {
     isDragging = true; startX = e.clientX || (e.touches && e.touches[0].clientX); dragged = false;
     hero.classList.add('dragging');
   };
-  var onMove = function(e) {
+  let onMove = function(e) {
     if (!isDragging) return;
-    var mx = e.clientX || (e.touches && e.touches[0].clientX);
+    let mx = e.clientX || (e.touches && e.touches[0].clientX);
     if (Math.abs(mx - startX) > 8) dragged = true;
   };
-  var onUp = function(e) {
+  let onUp = function(e) {
     if (!isDragging) return;
     isDragging = false;
     hero.classList.remove('dragging');
     if (!dragged) return;
-    var mx = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+    let mx = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
     if (startX - mx > 50) next();       // dragged left = next
     else if (mx - startX > 50) prev();  // dragged right = prev
   };
@@ -609,16 +1005,16 @@ workDetail.addEventListener('wheel', function(e) {
 
   // Auto-play active when in view, with fallback play button for mobile
   function tryPlay(idx) {
-    var p = videos[idx].play();
+    let p = videos[idx].play();
     if (p && p.then) {
       p.then(function() {
         // Success: hide any fallback button
-        var btn = slides[idx].querySelector('.motion-play-btn');
+        let btn = slides[idx].querySelector('.motion-play-btn');
         if (btn) btn.classList.remove('show');
       }).catch(function() {
         // Autoplay blocked: show fallback play button
-        var existing = slides[idx].querySelector('.motion-play-btn');
-        var btn;
+        let existing = slides[idx].querySelector('.motion-play-btn');
+        let btn;
         if (existing) {
           btn = existing;
         } else {
@@ -634,7 +1030,7 @@ workDetail.addEventListener('wheel', function(e) {
 
   // Delegate clicks on play buttons
   track.addEventListener('click', function(e) {
-    var btn = e.target.closest('.motion-play-btn');
+    let btn = e.target.closest('.motion-play-btn');
     if (!btn) return;
     btn.classList.remove('show');
     videos[current].play().catch(function(){});
@@ -645,16 +1041,16 @@ workDetail.addEventListener('wheel', function(e) {
     if (entries[0].isIntersecting) {
       tryPlay(current);
     } else {
-      for (var v2 = 0; v2 < videos.length; v2++) videos[v2].pause();
+      for (let v2 = 0; v2 < videos.length; v2++) videos[v2].pause();
     }
   }, { threshold: 0.3 }).observe(track);
 })();
 
 // MENU PANEL
 (function() {
-  var btn = document.getElementById('navMenuBtn');
-  var panel = document.getElementById('menuPanel');
-  var closeBtn = document.getElementById('menuPanelClose');
+  let btn = document.getElementById('navMenuBtn');
+  let panel = document.getElementById('menuPanel');
+  let closeBtn = document.getElementById('menuPanelClose');
   if (!btn || !panel) return;
 
   function openMenu() {
@@ -662,7 +1058,7 @@ workDetail.addEventListener('wheel', function(e) {
     panel.classList.add('open');
     document.body.style.overflow = 'hidden';
     cursorDot.style.opacity = '0'; cursorRing.style.opacity = '0';
-    var sb = document.getElementById('scrollBar');
+    let sb = document.getElementById('scrollBar');
     if (sb) sb.style.display = 'none';
   }
 
@@ -671,7 +1067,7 @@ workDetail.addEventListener('wheel', function(e) {
     panel.classList.remove('open');
     document.body.style.overflow = '';
     cursorDot.style.opacity = '0'; cursorRing.style.opacity = '0';
-    var sb = document.getElementById('scrollBar');
+    let sb = document.getElementById('scrollBar');
     if (sb) sb.style.display = '';
   }
 
@@ -695,12 +1091,12 @@ workDetail.addEventListener('wheel', function(e) {
   panel.querySelectorAll('.menu-nav-link[data-link]').forEach(function(link) {
     link.addEventListener('click', function(e) {
       e.preventDefault();
-      var target = document.getElementById(link.dataset.link);
+      let target = document.getElementById(link.dataset.link);
       if (!target) return;
       closeMenu();
       pageTransition.classList.add('active');
       setTimeout(function() { pageTransition.classList.remove('active'); }, 1000);
-      var top = link.dataset.link === 'home' ? 0 : target.getBoundingClientRect().top + window.scrollY - 80;
+      let top = link.dataset.link === 'home' ? 0 : target.getBoundingClientRect().top + window.scrollY - 80;
       window.scrollTo({ top: top, behavior: 'smooth' });
       if (workDetail && workDetail.classList.contains('open')) closeDetail();
     });
@@ -709,13 +1105,13 @@ workDetail.addEventListener('wheel', function(e) {
 
 // ═══════════ STARS BACKGROUND ═══════════
 (function() {
-  var canvas = document.getElementById('starsCanvas');
+  let canvas = document.getElementById('starsCanvas');
   if (!canvas) return;
-  var ctx = canvas.getContext('2d');
-  var stars = [];
-  var TARGET_COUNT = window.innerWidth <= 768 ? 100 : 260;
-  var frameCount = 0;
-  var w, h, dpr;
+  let ctx = canvas.getContext('2d');
+  let stars = [];
+  let TARGET_COUNT = window.innerWidth <= 768 ? 100 : 260;
+  let frameCount = 0;
+  let w, h, dpr;
 
   function resize() {
     dpr = window.devicePixelRatio || 1;
@@ -729,7 +1125,7 @@ workDetail.addEventListener('wheel', function(e) {
   }
 
   function spawnStar() {
-    var depth = Math.pow(Math.random(), 3);
+    let depth = Math.pow(Math.random(), 3);
     return {
       x: Math.random() * w,
       y: Math.random() * h,
@@ -745,7 +1141,7 @@ workDetail.addEventListener('wheel', function(e) {
 
   function init() {
     stars.length = 0;
-    for (var i = 0; i < TARGET_COUNT; i++) {
+    for (let i = 0; i < TARGET_COUNT; i++) {
       stars.push(spawnStar());
     }
   }
@@ -760,7 +1156,7 @@ workDetail.addEventListener('wheel', function(e) {
   }
 
   function drawGlow(cx, cy, r, alpha) {
-    var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    let grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
     grad.addColorStop(0, 'rgba(255,255,255,' + alpha + ')');
     grad.addColorStop(0.3, 'rgba(255,255,255,' + (alpha * 0.5) + ')');
     grad.addColorStop(1, 'rgba(255,255,255,0)');
@@ -774,29 +1170,29 @@ workDetail.addEventListener('wheel', function(e) {
 
     // Subtle vignette overlay for depth (skip in light mode)
     if (!isLight) {
-      var vignette = ctx.createRadialGradient(w * 0.5, h * 0.4, h * 0.15, w * 0.5, h * 0.4, w * 0.75);
+      let vignette = ctx.createRadialGradient(w * 0.5, h * 0.4, h * 0.15, w * 0.5, h * 0.4, w * 0.75);
       vignette.addColorStop(0, 'rgba(0,0,0,0)');
       vignette.addColorStop(1, 'rgba(0,0,0,0.35)');
       ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, w, h);
     }
 
-    var t = ts * 0.001;
+    let t = ts * 0.001;
 
-    for (var i = stars.length - 1; i >= 0; i--) {
-      var s = stars[i];
+    for (let i = stars.length - 1; i >= 0; i--) {
+      let s = stars[i];
       s.life++;
 
-      var lifeRatio = s.maxLife > 0 ? s.life / s.maxLife : 1;
-      var fadeAlpha = 1;
+      let lifeRatio = s.maxLife > 0 ? s.life / s.maxLife : 1;
+      let fadeAlpha = 1;
       if (lifeRatio > 0.85) {
         fadeAlpha = 1 - (lifeRatio - 0.85) / 0.15;
       } else if (lifeRatio < 0.1) {
         fadeAlpha = lifeRatio / 0.1;
       }
 
-      var twinkle = 0.5 + 0.5 * Math.sin(t * s.speed + s.phase);
-      var alpha = s.peakOpacity * twinkle * fadeAlpha;
+      let twinkle = 0.5 + 0.5 * Math.sin(t * s.speed + s.phase);
+      let alpha = s.peakOpacity * twinkle * fadeAlpha;
 
       if (alpha > 0.003) {
         // Draw glow first (behind diamond)
@@ -819,7 +1215,7 @@ workDetail.addEventListener('wheel', function(e) {
           ctx.globalAlpha = alpha * 0.35;
           ctx.strokeStyle = '#fff';
           ctx.lineWidth = 0.3;
-          var cross = s.r * 3.5;
+          let cross = s.r * 3.5;
           ctx.beginPath();
           ctx.moveTo(s.x - cross, s.y); ctx.lineTo(s.x + cross, s.y);
           ctx.moveTo(s.x, s.y - cross); ctx.lineTo(s.x, s.y + cross);
@@ -832,7 +1228,7 @@ workDetail.addEventListener('wheel', function(e) {
 
       // Respawn at end of life
       if (s.life >= s.maxLife) {
-        var replacement = spawnStar();
+        let replacement = spawnStar();
         replacement.x = s.x;
         replacement.y = s.y;
         replacement.life = 0;
@@ -860,22 +1256,22 @@ workDetail.addEventListener('wheel', function(e) {
 
 // ═══════════ HANGING CIRCLES ═══════════
 (function() {
-  var canvas = document.getElementById('framesCanvas');
+  let canvas = document.getElementById('framesCanvas');
   if (!canvas) return;
   if (getComputedStyle(canvas).display === 'none') return;
   if ('ontouchstart' in window) { canvas.style.display = 'none'; return; }
-  var ctx = canvas.getContext('2d');
+  let ctx = canvas.getContext('2d');
 
-  var knobColors = ['#e85570', '#444444', '#bbbbbb', '#3ccda0'];
-  var ringImages = [null, null, null, null];
-  var ringLoaded = [false, false, false, false];
+  let knobColors = ['#e85570', '#444444', '#bbbbbb', '#3ccda0'];
+  let ringImages = [null, null, null, null];
+  let ringLoaded = [false, false, false, false];
 
   (function preloadImages() {
-    var cards = document.querySelectorAll('.work-card');
+    let cards = document.querySelectorAll('.work-card');
     cards.forEach(function(card, i) {
       if (i >= 4) return;
       (function(idx) {
-        var img = new Image();
+        let img = new Image();
         img.src = card.dataset.image;
         img.onload = function() {
           ringImages[idx] = img;
@@ -886,27 +1282,27 @@ workDetail.addEventListener('wheel', function(e) {
     });
   })();
 
-  var springK = 0.05;
-  var damping = 0.84;
-  var gravity = 0.06;
+  let springK = 0.05;
+  let damping = 0.84;
+  let gravity = 0.06;
 
-  var thumbs = [];
-  var draggedIdx = -1;
-  var hoveredIdx = -1;
-  var latchedIdx = -1; // index of the disc locked to its anchor
-  var dragOffX = 0, dragOffY = 0;
-  var dragStartX = 0, dragStartY = 0;
-  var prevMouseX = 0, prevMouseY = 0;
-  var mouseCanvasX = 0, mouseCanvasY = 0;
+  let thumbs = [];
+  let draggedIdx = -1;
+  let hoveredIdx = -1;
+  let latchedIdx = -1; // index of the disc locked to its anchor
+  let dragOffX = 0, dragOffY = 0;
+  let dragStartX = 0, dragStartY = 0;
+  let prevMouseX = 0, prevMouseY = 0;
+  let mouseCanvasX = 0, mouseCanvasY = 0;
 
   // --- audio players for each disc ---
-  var audios = [
+  let audios = [
     new Audio('sound/01.mp3'),
     new Audio('sound/02.mp3'),
     new Audio('sound/03.mp3'),
     new Audio('sound/04.mp3')
   ];
-  var prevHoveredIdx = -1;
+  let prevHoveredIdx = -1;
   audios.forEach(function(a) { a.loop = true; a.volume = 0.6; });
 
   function handleAudioHover(newIdx) {
@@ -934,7 +1330,7 @@ workDetail.addEventListener('wheel', function(e) {
 
   // Force play for latched disc (called from mouseup)
   window.__navWaveForcePlay = function(idx) {
-    for (var i = 0; i < audios.length; i++) {
+    for (let i = 0; i < audios.length; i++) {
       if (i !== idx) { audios[i].pause(); audios[i].currentTime = 0; }
     }
     audios[idx].currentTime = 0;
@@ -952,26 +1348,26 @@ workDetail.addEventListener('wheel', function(e) {
   }
 
   function resize() {
-    var hero = document.getElementById('home');
+    let hero = document.getElementById('home');
     if (!hero) return;
-    var rect = hero.getBoundingClientRect();
-    var dpr = window.devicePixelRatio || 1;
+    let rect = hero.getBoundingClientRect();
+    let dpr = window.devicePixelRatio || 1;
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     canvas.style.width = rect.width + 'px';
     canvas.style.height = rect.height + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var w = rect.width, h = rect.height;
+    let w = rect.width, h = rect.height;
 
-    var sz = getCircleSz(w);
-    var gap = sz * 1.1;
-    var xOff = w < 1200 ? w * 0.52 : w * 0.58;
-    var yOffsets = [0, sz * 0.12, sz * 0.24, sz * 0.36];
-    var anchorY = 0;
-    var anchorXs = [xOff, xOff + gap, xOff + gap * 2, xOff + gap * 3];
-    var bottomY = h * 0.33;
-    var anchors = [];
-    for (var ai = 0; ai < 4; ai++) {
+    let sz = getCircleSz(w);
+    let gap = sz * 1.1;
+    let xOff = w < 1200 ? w * 0.52 : w * 0.58;
+    let yOffsets = [0, sz * 0.12, sz * 0.24, sz * 0.36];
+    let anchorY = 0;
+    let anchorXs = [xOff, xOff + gap, xOff + gap * 2, xOff + gap * 3];
+    let bottomY = h * 0.33;
+    let anchors = [];
+    for (let ai = 0; ai < 4; ai++) {
       anchors.push({
         x: anchorXs[ai],
         y: anchorY,
@@ -981,14 +1377,14 @@ workDetail.addEventListener('wheel', function(e) {
     }
 
     if (thumbs.length === 0) {
-      var loadDelay = 0.45;
-      for (var i = 0; i < 4; i++) {
-        var a = anchors[i];
-        var cs = getCircleSz(w);
-        var restX = a.x + a.restOffX;
-        var restY = a.y + a.stringLen + (yOffsets[i] || 0);
-        var startY = -cs * 3;
-        var startX = restX + (Math.random() - 0.5) * 60;
+      let loadDelay = 0.45;
+      for (let i = 0; i < 4; i++) {
+        let a = anchors[i];
+        let cs = getCircleSz(w);
+        let restX = a.x + a.restOffX;
+        let restY = a.y + a.stringLen + (yOffsets[i] || 0);
+        let startY = -cs * 3;
+        let startX = restX + (Math.random() - 0.5) * 60;
         thumbs.push({
           x: startX, y: startY, vx: 0, vy: 0,
           anchorX: a.x, anchorY: a.y,
@@ -1002,9 +1398,9 @@ workDetail.addEventListener('wheel', function(e) {
         });
       }
     } else {
-      var cs2 = getCircleSz(w);
-      for (var j = 0; j < 4; j++) {
-        var b = anchors[j];
+      let cs2 = getCircleSz(w);
+      for (let j = 0; j < 4; j++) {
+        let b = anchors[j];
         thumbs[j].anchorX = b.x;
         thumbs[j].anchorY = b.y;
         thumbs[j].restX = b.x + b.restOffX;
@@ -1015,15 +1411,15 @@ workDetail.addEventListener('wheel', function(e) {
     }
 
     // Position latch clips to match anchorX (same as canvas coords, no offset needed)
-    var clips = document.querySelectorAll('.latch-clip');
-    for (var k = 0; k < clips.length && k < thumbs.length; k++) {
+    let clips = document.querySelectorAll('.latch-clip');
+    for (let k = 0; k < clips.length && k < thumbs.length; k++) {
       clips[k].style.left = thumbs[k].anchorX + 'px';
     }
     // Click on HTML clip to unlatch
     clips.forEach(function(clip, ci) {
       clip.onclick = function() {
         if (latchedIdx === ci) {
-          var tl = thumbs[latchedIdx];
+          let tl = thumbs[latchedIdx];
           tl.vy = -8;
           tl.vx = (Math.random() - 0.5) * 3;
           tl.entering = false;
@@ -1035,25 +1431,25 @@ workDetail.addEventListener('wheel', function(e) {
     });
   }
 
-  var startTime = 0;
+  let startTime = 0;
 
   function update(ts) {
     if (!startTime) startTime = ts;
-    var elapsed = (ts - startTime) / 1000;
+    let elapsed = (ts - startTime) / 1000;
 
     if (draggedIdx < 0) {
       hoveredIdx = getThumbAt(mouseCanvasX, mouseCanvasY);
     }
 
-    for (var i = 0; i < thumbs.length; i++) {
-      var t = thumbs[i];
+    for (let i = 0; i < thumbs.length; i++) {
+      let t = thumbs[i];
       // Latched disc: smooth lock to HTML latch clip position
       if (i === latchedIdx) {
         if (i !== draggedIdx) {
-          var heroRect2 = document.getElementById('home').getBoundingClientRect();
-          var cRect2 = canvas.getBoundingClientRect();
-          var targetX = t.anchorX;
-          var targetY = (heroRect2.top + 60) - cRect2.top + 14; // center of half-circle
+          let heroRect2 = document.getElementById('home').getBoundingClientRect();
+          let cRect2 = canvas.getBoundingClientRect();
+          let targetX = t.anchorX;
+          let targetY = (heroRect2.top + 60) - cRect2.top + 14; // center of half-circle
           // Smooth lerp toward latch position
           t.x += (targetX - t.x) * 0.3;
           t.y += (targetY - t.y) * 0.3;
@@ -1063,8 +1459,8 @@ workDetail.addEventListener('wheel', function(e) {
           continue;
         }
       }
-      var targetHA = (i === hoveredIdx && draggedIdx < 0) ? 1 : 0;
-      var speed = targetHA > t.hoverAlpha ? 0.04 : 0.05;
+      let targetHA = (i === hoveredIdx && draggedIdx < 0) ? 1 : 0;
+      let speed = targetHA > t.hoverAlpha ? 0.04 : 0.05;
       t.hoverAlpha += (targetHA - t.hoverAlpha) * speed;
 
       if (i === draggedIdx) continue;
@@ -1089,8 +1485,8 @@ workDetail.addEventListener('wheel', function(e) {
         continue;
       }
 
-      var dx = t.restX - t.x;
-      var dy2 = t.restY - t.y;
+      let dx = t.restX - t.x;
+      let dy2 = t.restY - t.y;
       t.vx += dx * springK;
       t.vy += dy2 * springK;
       t.vx *= damping;
@@ -1101,35 +1497,35 @@ workDetail.addEventListener('wheel', function(e) {
   }
 
   function drawString(ax, ay, bx, by) {
-    var dx = bx - ax, dy = by - ay;
-    var len = Math.sqrt(dx * dx + dy * dy);
+    let dx = bx - ax, dy = by - ay;
+    let len = Math.sqrt(dx * dx + dy * dy);
     if (len < 2) return;
-    var segments = Math.floor(len * 2);
+    let segments = Math.floor(len * 2);
     if (segments < 40) segments = 40;
-    var coils = Math.floor(len / 24);
+    let coils = Math.floor(len / 24);
     if (coils < 2) coils = 2;
-    var amp = 12;
+    let amp = 12;
 
     ctx.beginPath();
     ctx.moveTo(ax, ay);
-    var perpX = -dy / len;
-    var perpY = dx / len;
-    var subSegs = Math.floor(segments / 6);
+    let perpX = -dy / len;
+    let perpY = dx / len;
+    let subSegs = Math.floor(segments / 6);
     if (subSegs < 8) subSegs = 8;
-    for (var g = 0; g < subSegs; g++) {
-      var t0 = g / subSegs;
-      var t1 = (g + 1) / subSegs;
-      var alpha = 0.28 * (t0 + t1) / 2;
+    for (let g = 0; g < subSegs; g++) {
+      let t0 = g / subSegs;
+      let t1 = (g + 1) / subSegs;
+      let alpha = 0.28 * (t0 + t1) / 2;
       ctx.beginPath();
-      var x0 = ax + dx * t0 + perpX * Math.sin(t0 * coils * Math.PI * 2) * amp;
-      var y0 = ay + dy * t0 + perpY * Math.sin(t0 * coils * Math.PI * 2) * amp;
+      let x0 = ax + dx * t0 + perpX * Math.sin(t0 * coils * Math.PI * 2) * amp;
+      let y0 = ay + dy * t0 + perpY * Math.sin(t0 * coils * Math.PI * 2) * amp;
       ctx.moveTo(x0, y0);
-      var steps = Math.floor((t1 - t0) * segments);
+      let steps = Math.floor((t1 - t0) * segments);
       if (steps < 4) steps = 4;
-      for (var s = 1; s <= steps; s++) {
-        var tt = t0 + (s / steps) * (t1 - t0);
-        var x = ax + dx * tt + perpX * Math.sin(tt * coils * Math.PI * 2) * amp;
-        var y = ay + dy * tt + perpY * Math.sin(tt * coils * Math.PI * 2) * amp;
+      for (let s = 1; s <= steps; s++) {
+        let tt = t0 + (s / steps) * (t1 - t0);
+        let x = ax + dx * tt + perpX * Math.sin(tt * coils * Math.PI * 2) * amp;
+        let y = ay + dy * tt + perpY * Math.sin(tt * coils * Math.PI * 2) * amp;
         ctx.lineTo(x, y);
       }
       ctx.strokeStyle = 'rgba(' + (isLight ? '0,0,0' : '255,255,255') + ',' + alpha + ')';
@@ -1141,10 +1537,10 @@ workDetail.addEventListener('wheel', function(e) {
   function drawThumb(t, idx) {
     if (t.y + t.dispH < -20) return;
 
-    var r = t.dispW / 2;
-    var ha = t.hoverAlpha || 0;
+    let r = t.dispW / 2;
+    let ha = t.hoverAlpha || 0;
 
-    var spinning = (idx === hoveredIdx || idx === draggedIdx || idx === latchedIdx) ? 1 : 0;
+    let spinning = (idx === hoveredIdx || idx === draggedIdx || idx === latchedIdx) ? 1 : 0;
     if (t._spin === undefined) t._spin = 0;
     if (t._spinSpeed === undefined) t._spinSpeed = 0;
     if (t._spinTimer === undefined) t._spinTimer = 0;
@@ -1153,23 +1549,23 @@ workDetail.addEventListener('wheel', function(e) {
     } else {
       t._spinTimer = 0;
     }
-    var active = t._spinTimer > 0.2 ? 1 : 0;
+    let active = t._spinTimer > 0.2 ? 1 : 0;
     t._spinSpeed += (active * 0.015 - t._spinSpeed) * 0.04;
     // When not active, slowly return spin to nearest multiple of 2π (reset position)
     if (!active) {
-      var mod = t._spin % (Math.PI * 2);
+      let mod = t._spin % (Math.PI * 2);
       if (mod < 0) mod += Math.PI * 2;
       // snap to nearest 0 or π (pick the closer one)
-      var target = mod < Math.PI ? 0 : Math.PI * 2;
+      let target = mod < Math.PI ? 0 : Math.PI * 2;
       t._spin += (target - mod) * 0.03;
     }
     t._spin += t._spinSpeed;
 
-    var eased = ha < 0.01 ? 0 : 1 - Math.pow(1 - ha, 3);
-    var scale = 1 + eased * 0.09;
+    let eased = ha < 0.01 ? 0 : 1 - Math.pow(1 - ha, 3);
+    let scale = 1 + eased * 0.09;
 
     // 常亮白色雾状外发光
-    var softGlow = ctx.createRadialGradient(t.x, t.y, r * 0.8, t.x, t.y, r * 1.8);
+    let softGlow = ctx.createRadialGradient(t.x, t.y, r * 0.8, t.x, t.y, r * 1.8);
     softGlow.addColorStop(0, 'rgba(255,255,255,0.10)');
     softGlow.addColorStop(0.5, 'rgba(255,255,255,0.03)');
     softGlow.addColorStop(1, 'rgba(255,255,255,0)');
@@ -1178,8 +1574,8 @@ workDetail.addEventListener('wheel', function(e) {
 
     // hover 增强发光 — 统一白色
     if (ha > 0.01) {
-      var glowR = r * 3;
-      var grad = ctx.createRadialGradient(t.x, t.y, r * 0.3, t.x, t.y, glowR);
+      let glowR = r * 3;
+      let grad = ctx.createRadialGradient(t.x, t.y, r * 0.3, t.x, t.y, glowR);
       grad.addColorStop(0, 'rgba(255,255,255,' + (eased * 0.25) + ')');
       grad.addColorStop(0.5, 'rgba(255,255,255,' + (eased * 0.08) + ')');
       grad.addColorStop(1, 'rgba(255,255,255,0)');
@@ -1203,11 +1599,11 @@ workDetail.addEventListener('wheel', function(e) {
       ctx.arc(0, 0, r * 0.25, 0, Math.PI * 2, true);
       ctx.save();
       ctx.clip('evenodd');
-      var img = ringImages[idx];
-      var iw = img.width, ih = img.height;
+      let img = ringImages[idx];
+      let iw = img.width, ih = img.height;
       // 按内径填满环形外圈，确保圆环完全被图片覆盖
-      var scaleImg = Math.max(r * 2 / iw, r * 2 / ih) * 1.3;
-      var dw = iw * scaleImg, dh = ih * scaleImg;
+      let scaleImg = Math.max(r * 2 / iw, r * 2 / ih) * 1.3;
+      let dw = iw * scaleImg, dh = ih * scaleImg;
       ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
       ctx.restore();
     }
@@ -1246,20 +1642,20 @@ workDetail.addEventListener('wheel', function(e) {
 
   function render(ts) {
     update(ts);
-    var cw = canvas.width / (window.devicePixelRatio || 1);
-    var ch = canvas.height / (window.devicePixelRatio || 1);
+    let cw = canvas.width / (window.devicePixelRatio || 1);
+    let ch = canvas.height / (window.devicePixelRatio || 1);
     ctx.clearRect(0, 0, cw, ch);
-    for (var i = 0; i < thumbs.length; i++) {
+    for (let i = 0; i < thumbs.length; i++) {
       drawThumb(thumbs[i], i);
     }
     requestAnimationFrame(render);
   }
 
   function getThumbAt(mx, my) {
-    for (var i = 0; i < thumbs.length; i++) {
-      var t = thumbs[i];
-      var r = t.dispW / 2;
-      var dx = mx - t.x, dy = my - t.y;
+    for (let i = 0; i < thumbs.length; i++) {
+      let t = thumbs[i];
+      let r = t.dispW / 2;
+      let dx = mx - t.x, dy = my - t.y;
       if (dx * dx + dy * dy <= r * r * 1.44) {
         return i;
       }
@@ -1268,13 +1664,13 @@ workDetail.addEventListener('wheel', function(e) {
   }
 
   canvas.addEventListener('mousedown', function(e) {
-    var rect = canvas.getBoundingClientRect();
-    var mx = e.clientX - rect.left;
-    var my = e.clientY - rect.top;
-    var idx = getThumbAt(mx, my);
+    let rect = canvas.getBoundingClientRect();
+    let mx = e.clientX - rect.left;
+    let my = e.clientY - rect.top;
+    let idx = getThumbAt(mx, my);
     if (idx !== -1) {
       draggedIdx = idx;
-      var t = thumbs[idx];
+      let t = thumbs[idx];
       dragOffX = t.x - mx;
       dragOffY = t.y - my;
       dragStartX = mx;
@@ -1288,21 +1684,21 @@ workDetail.addEventListener('wheel', function(e) {
   });
 
   canvas.addEventListener('mousemove', function(e) {
-    var rect = canvas.getBoundingClientRect();
-    var mx = e.clientX - rect.left;
-    var my = e.clientY - rect.top;
+    let rect = canvas.getBoundingClientRect();
+    let mx = e.clientX - rect.left;
+    let my = e.clientY - rect.top;
     mouseCanvasX = mx;
     mouseCanvasY = my;
     if (draggedIdx >= 0) {
-      var t = thumbs[draggedIdx];
+      let t = thumbs[draggedIdx];
       t.x = mx + dragOffX;
       t.y = my + dragOffY;
       // If dragging a latched disc far enough, unlatch it
       if (latchedIdx === draggedIdx) {
-        var heroRect3 = document.getElementById('home').getBoundingClientRect();
-        var cRect3 = canvas.getBoundingClientRect();
-        var latchCY = (heroRect3.top + 70) - cRect3.top;
-        var pullDist = Math.sqrt(Math.pow(t.x - t.anchorX, 2) + Math.pow(t.y - latchCY, 2));
+        let heroRect3 = document.getElementById('home').getBoundingClientRect();
+        let cRect3 = canvas.getBoundingClientRect();
+        let latchCY = (heroRect3.top + 70) - cRect3.top;
+        let pullDist = Math.sqrt(Math.pow(t.x - t.anchorX, 2) + Math.pow(t.y - latchCY, 2));
         if (pullDist > t.dispW * 0.6) {
           latchedIdx = -1;
           document.querySelectorAll('.latch-clip').forEach(function(c){ c.classList.remove('latched'); });
@@ -1313,18 +1709,18 @@ workDetail.addEventListener('wheel', function(e) {
         }
       } else {
         // Snap magnetism: if near latch clip, pull toward it
-        var heroRect3 = document.getElementById('home').getBoundingClientRect();
-        var latchScreenY2 = heroRect3.top + 70;
-        var canvasRect3 = canvas.getBoundingClientRect();
-        var discSX = canvasRect3.left + t.x;
-        var discSY = canvasRect3.top + t.y;
-        var latchSX = canvasRect3.left + t.anchorX;
-        var snapDx = discSX - latchSX;
-        var snapDy = discSY - latchScreenY2;
-        var snapDist = Math.sqrt(snapDx * snapDx + snapDy * snapDy);
-        var snapZone = t.dispW * 1.4;
+        let heroRect3 = document.getElementById('home').getBoundingClientRect();
+        let latchScreenY2 = heroRect3.top + 70;
+        let canvasRect3 = canvas.getBoundingClientRect();
+        let discSX = canvasRect3.left + t.x;
+        let discSY = canvasRect3.top + t.y;
+        let latchSX = canvasRect3.left + t.anchorX;
+        let snapDx = discSX - latchSX;
+        let snapDy = discSY - latchScreenY2;
+        let snapDist = Math.sqrt(snapDx * snapDx + snapDy * snapDy);
+        let snapZone = t.dispW * 1.4;
         if (snapDist < snapZone && snapDist > 5) {
-          var pull = (snapZone - snapDist) / snapZone;
+          let pull = (snapZone - snapDist) / snapZone;
           pull = pull * pull * 0.12;
           t.x -= (snapDx / snapDist) * snapDist * pull;
           t.y -= (snapDy / snapDist) * snapDist * pull;
@@ -1342,15 +1738,15 @@ workDetail.addEventListener('wheel', function(e) {
 
   canvas.addEventListener('mouseup', function(e) {
     if (draggedIdx >= 0) {
-      var rect = canvas.getBoundingClientRect();
-      var mx = e.clientX - rect.left;
-      var my = e.clientY - rect.top;
-      var dist = Math.sqrt(Math.pow(mx - dragStartX, 2) + Math.pow(my - dragStartY, 2));
+      let rect = canvas.getBoundingClientRect();
+      let mx = e.clientX - rect.left;
+      let my = e.clientY - rect.top;
+      let dist = Math.sqrt(Math.pow(mx - dragStartX, 2) + Math.pow(my - dragStartY, 2));
       if (dist < 3) {
         // Short click: if this disc is latched, unlatch it with a bounce
-        console.log('short click on dragged', draggedIdx, 'latchedIdx', latchedIdx);
+
         if (latchedIdx === draggedIdx) {
-          var tl = thumbs[latchedIdx];
+          let tl = thumbs[latchedIdx];
           tl.vy = -8;
           tl.vx = (Math.random() - 0.5) * 3;
           tl.entering = false;
@@ -1363,42 +1759,43 @@ workDetail.addEventListener('wheel', function(e) {
           canvas.style.cursor = '';
           return;
         }
-        var works = document.querySelectorAll('.work-card');
+        let works = document.querySelectorAll('.work-card');
         if (works[draggedIdx]) {
-          var card = works[draggedIdx];
-          var key = card.dataset.work;
-          var hero = card.dataset.hero;
+          let card = works[draggedIdx];
+          let key = card.dataset.work;
+          let hero = card.dataset.hero;
           if (key && workData && workData[key]) {
-            openDetail(workData[key], hero);
+            let data = Object.assign({ slug: key }, workData[key]);
+            openDetail(data, hero);
           }
         }
       } else {
         // Drag release: check if near HTML latch clip
-        var t = thumbs[draggedIdx];
-        var heroRect = document.getElementById('home').getBoundingClientRect();
-        var latchScreenY = heroRect.top + 70;
+        let t = thumbs[draggedIdx];
+        let heroRect = document.getElementById('home').getBoundingClientRect();
+        let latchScreenY = heroRect.top + 70;
         // Disc screen position (canvas uses transform, so screen = canvas pos + canvas offset)
-        var canvasRect = canvas.getBoundingClientRect();
-        var discScreenX = canvasRect.left + t.x;
-        var discScreenY = canvasRect.top + t.y;
+        let canvasRect = canvas.getBoundingClientRect();
+        let discScreenX = canvasRect.left + t.x;
+        let discScreenY = canvasRect.top + t.y;
         // Latch X on screen = canvas left + anchorX
-        var latchScreenX = canvasRect.left + t.anchorX;
-        var dx2 = discScreenX - latchScreenX;
-        var dy2 = discScreenY - latchScreenY;
-        var latchDist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-        var latchThreshold = t.dispW * 1.2;
+        let latchScreenX = canvasRect.left + t.anchorX;
+        let dx2 = discScreenX - latchScreenX;
+        let dy2 = discScreenY - latchScreenY;
+        let latchDist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+        let latchThreshold = t.dispW * 1.2;
         if (latchDist < latchThreshold) {
           // Latch this disc, eject previous
           if (latchedIdx >= 0 && latchedIdx !== draggedIdx) {
-            var ejected = thumbs[latchedIdx];
+            let ejected = thumbs[latchedIdx];
             ejected.vy = -6;
             ejected.vx = (Math.random() - 0.5) * 2;
             ejected.entering = false;
           }
           latchedIdx = draggedIdx;
           // Snap disc to latch position
-          var heroRect = document.getElementById('home').getBoundingClientRect();
-          var cRect = canvas.getBoundingClientRect();
+          let heroRect = document.getElementById('home').getBoundingClientRect();
+          let cRect = canvas.getBoundingClientRect();
           t.x = t.anchorX;
           t.y = (heroRect.top + 60) - cRect.top + 14;
           t.vx = 0; t.vy = 0;
@@ -1436,11 +1833,11 @@ workDetail.addEventListener('wheel', function(e) {
 
 // ═══════════ BACK TO TOP ═══════════
 (function() {
-  var btn = document.getElementById('backToTop');
+  let btn = document.getElementById('backToTop');
   if (!btn) return;
 
   // Show after scrolling past hero
-  var hero = document.getElementById('home');
+  let hero = document.getElementById('home');
   new IntersectionObserver(function(entries) {
     if (entries[0].isIntersecting) {
       btn.classList.remove('visible');
@@ -1451,16 +1848,16 @@ workDetail.addEventListener('wheel', function(e) {
 
   btn.addEventListener('click', function() {
     // Smooth scroll with custom easing via requestAnimationFrame
-    var start = window.scrollY;
-    var startTime = null;
-    var duration = 1000;
+    let start = window.scrollY;
+    let startTime = null;
+    let duration = 1000;
 
     function step(ts) {
       if (!startTime) startTime = ts;
-      var elapsed = ts - startTime;
-      var progress = Math.min(elapsed / duration, 1);
+      let elapsed = ts - startTime;
+      let progress = Math.min(elapsed / duration, 1);
       // Ease out quint — fast start, gentle landing
-      var eased = 1 - Math.pow(1 - progress, 5);
+      let eased = 1 - Math.pow(1 - progress, 5);
       window.scrollTo(0, start * (1 - eased));
       if (progress < 1) {
         requestAnimationFrame(step);
@@ -1479,25 +1876,25 @@ workDetail.addEventListener('wheel', function(e) {
   if (!bar || !thumb) return;
 
   // --- Generate tick marks between dot markers (based on section positions) ---
-  var ticksContainer = document.getElementById('scrollTicks');
+  let ticksContainer = document.getElementById('scrollTicks');
   function generateTicks() {
     if (!ticksContainer) return;
     ticksContainer.innerHTML = '';
-    var h = document.documentElement;
-    var totalH = h.scrollHeight - h.clientHeight;
+    let h = document.documentElement;
+    let totalH = h.scrollHeight - h.clientHeight;
     if (totalH <= 0) return;
-    var dots = bar.querySelectorAll('.scroll-dot-marker');
-    for (var d = 0; d < dots.length - 1; d++) {
-      var elA = document.querySelector(dots[d].getAttribute('data-target'));
-      var elB = document.querySelector(dots[d + 1].getAttribute('data-target'));
+    let dots = bar.querySelectorAll('.scroll-dot-marker');
+    for (let d = 0; d < dots.length - 1; d++) {
+      let elA = document.querySelector(dots[d].getAttribute('data-target'));
+      let elB = document.querySelector(dots[d + 1].getAttribute('data-target'));
       if (!elA || !elB) continue;
-      var topA = (elA.getBoundingClientRect().top + h.scrollTop) / totalH * 100;
-      var topB = (elB.getBoundingClientRect().top + h.scrollTop) / totalH * 100;
+      let topA = (elA.getBoundingClientRect().top + h.scrollTop) / totalH * 100;
+      let topB = (elB.getBoundingClientRect().top + h.scrollTop) / totalH * 100;
       if (topA >= topB) continue;
-      var step = (topB - topA) / 4;
-      for (var t = 1; t <= 3; t++) {
-        var pct = topA + step * t;
-        var tick = document.createElement('div');
+      let step = (topB - topA) / 4;
+      for (let t = 1; t <= 3; t++) {
+        let pct = topA + step * t;
+        let tick = document.createElement('div');
         tick.className = 'scroll-tick';
         tick.style.top = pct + '%';
         ticksContainer.appendChild(tick);
@@ -1507,8 +1904,8 @@ workDetail.addEventListener('wheel', function(e) {
 
   // --- Show/hide based on scroll position (hide on hero, show after) ---
   function updateVisibility() {
-    var heroH = window.innerHeight;
-    var scrolled = window.scrollY;
+    let heroH = window.innerHeight;
+    let scrolled = window.scrollY;
     if (scrolled < heroH * 0.5) {
       bar.style.opacity = '0';
       bar.style.pointerEvents = 'none';
@@ -1521,13 +1918,13 @@ workDetail.addEventListener('wheel', function(e) {
   updateVisibility();
 
   // --- Add page bubbles to dot markers ---
-  var dotLabels = { '#home': '00', '#work': '01', '#ice': '02', '#showcase': '03', '#motion': '04', '#about': '05' };
-  var dots = bar.querySelectorAll('.scroll-dot-marker');
+  let dotLabels = { '#home': '00', '#work': '01', '#ice': '02', '#showcase': '03', '#motion': '04', '#about': '05' };
+  let dots = bar.querySelectorAll('.scroll-dot-marker');
 
   // --- smooth wheel scroll (declared early for bubble click) ---
-  var wheelTarget = document.documentElement.scrollTop;
-  var wheelCurrent = wheelTarget;
-  var wheelRaf = null;
+  let wheelTarget = document.documentElement.scrollTop;
+  let wheelCurrent = wheelTarget;
+  let wheelRaf = null;
 
   function startWheelLerp() {
     // Don't interfere with bubble-click lerpScroll
@@ -1536,7 +1933,7 @@ workDetail.addEventListener('wheel', function(e) {
     wheelRaf = requestAnimationFrame(function tick() {
       // Yield to lerpScroll if it's handling a bubble click
       if (lerpActive && bubbleLerpStartTime > 0) { wheelRaf = null; return; }
-      var diff = wheelTarget - wheelCurrent;
+      let diff = wheelTarget - wheelCurrent;
       if (Math.abs(diff) < 0.3) {
         wheelCurrent = wheelTarget;
         document.documentElement.scrollTop = wheelCurrent;
@@ -1556,10 +1953,10 @@ workDetail.addEventListener('wheel', function(e) {
   }
 
   dots.forEach(function(dot){
-    var targetId = dot.getAttribute('data-target');
-    var label = dotLabels[targetId] || '';
+    let targetId = dot.getAttribute('data-target');
+    let label = dotLabels[targetId] || '';
     if (!label) return;
-    var bubble = document.createElement('span');
+    let bubble = document.createElement('span');
     bubble.className = 'scroll-bubble';
     bubble.textContent = 'P' + label;
     dot.appendChild(bubble);
@@ -1568,16 +1965,16 @@ workDetail.addEventListener('wheel', function(e) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
-      var el = document.querySelector(targetId);
+      let el = document.querySelector(targetId);
       if (!el) return;
-      var totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      var targetTop = el.getBoundingClientRect().top + document.documentElement.scrollTop - document.documentElement.clientHeight * 0.1;
+      let totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      let targetTop = el.getBoundingClientRect().top + document.documentElement.scrollTop - document.documentElement.clientHeight * 0.1;
       targetScroll = Math.max(0, Math.min(totalH, targetTop));
       bubbleLerpStartScroll = document.documentElement.scrollTop;
       // Duration based on distance: min 600ms, max 1800ms
-      var scrollDist = Math.abs(targetScroll - bubbleLerpStartScroll);
-      var viewH = document.documentElement.clientHeight;
-      var screens = scrollDist / viewH;
+      let scrollDist = Math.abs(targetScroll - bubbleLerpStartScroll);
+      let viewH = document.documentElement.clientHeight;
+      let screens = scrollDist / viewH;
       bubbleLerpDuration = Math.max(600, Math.min(1800, 400 + screens * 320));
       bubbleLerpStartTime = performance.now();
       currentScroll = bubbleLerpStartScroll;
@@ -1656,32 +2053,32 @@ workDetail.addEventListener('wheel', function(e) {
     const totalH = h.scrollHeight - h.clientHeight;
     if (totalH <= 0) return [];
     const dots = bar.querySelectorAll('.scroll-dot-marker');
-    var positions = [];
+    let positions = [];
     dots.forEach(function(dot) {
-      var targetId = dot.getAttribute('data-target');
-      var el = document.querySelector(targetId);
+      let targetId = dot.getAttribute('data-target');
+      let el = document.querySelector(targetId);
       if (!el) return;
-      var elTop = el.getBoundingClientRect().top + h.scrollTop + h.clientHeight * 0.05;
+      let elTop = el.getBoundingClientRect().top + h.scrollTop + h.clientHeight * 0.05;
       positions.push(elTop);
     });
     return positions;
   }
 
-  var bubbleLerpStartTime = 0;
-  var bubbleLerpDuration = 0;
-  var bubbleLerpStartScroll = 0;
+  let bubbleLerpStartTime = 0;
+  let bubbleLerpDuration = 0;
+  let bubbleLerpStartScroll = 0;
 
   function lerpScroll() {
     if (!lerpActive) return;
-    var diff = targetScroll - currentScroll;
-    var speed = 0.2;
+    let diff = targetScroll - currentScroll;
+    let speed = 0.2;
     // snap damping: magnetic pull near dot anchors (drag only)
     if (dragging) {
-      var dots = getDotScrollPositions();
-      var totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      var snapZone = totalH * 0.06;
-      for (var i = 0; i < dots.length; i++) {
-        var dist = Math.abs(currentScroll - dots[i]);
+      let dots = getDotScrollPositions();
+      let totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      let snapZone = totalH * 0.06;
+      for (let i = 0; i < dots.length; i++) {
+        let dist = Math.abs(currentScroll - dots[i]);
         if (dist < snapZone) {
           speed = 0.03 + (dist / snapZone) * 0.17;
           break;
@@ -1689,10 +2086,10 @@ workDetail.addEventListener('wheel', function(e) {
       }
     } else if (bubbleLerpStartTime > 0) {
       // Use custom easeInOutCubic for smooth acceleration + deceleration
-      var elapsed = performance.now() - bubbleLerpStartTime;
-      var progress = Math.min(elapsed / bubbleLerpDuration, 1);
+      let elapsed = performance.now() - bubbleLerpStartTime;
+      let progress = Math.min(elapsed / bubbleLerpDuration, 1);
       // easeInOutCubic: smooth start, smooth end
-      var eased = progress < 0.5
+      let eased = progress < 0.5
         ? 4 * progress * progress * progress
         : 1 - Math.pow(-2 * progress + 2, 3) / 2;
       currentScroll = bubbleLerpStartScroll + (targetScroll - bubbleLerpStartScroll) * eased;
@@ -1778,15 +2175,15 @@ workDetail.addEventListener('wheel', function(e) {
     const dot = e.target.closest('.scroll-dot-marker');
     if (!dot) return;
     const targetId = dot.getAttribute('data-target');
-    var el = document.querySelector(targetId);
+    let el = document.querySelector(targetId);
     if (!el) return;
-    var totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    var targetTop = el.getBoundingClientRect().top + document.documentElement.scrollTop - document.documentElement.clientHeight * 0.1;
+    let totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    let targetTop = el.getBoundingClientRect().top + document.documentElement.scrollTop - document.documentElement.clientHeight * 0.1;
     targetScroll = Math.max(0, Math.min(totalH, targetTop));
     bubbleLerpStartScroll = document.documentElement.scrollTop;
-    var scrollDist = Math.abs(targetScroll - bubbleLerpStartScroll);
-    var viewH = document.documentElement.clientHeight;
-    var screens = scrollDist / viewH;
+    let scrollDist = Math.abs(targetScroll - bubbleLerpStartScroll);
+    let viewH = document.documentElement.clientHeight;
+    let screens = scrollDist / viewH;
     bubbleLerpDuration = Math.max(600, Math.min(1800, 400 + screens * 320));
     bubbleLerpStartTime = performance.now();
     currentScroll = bubbleLerpStartScroll;
@@ -1801,7 +2198,7 @@ workDetail.addEventListener('wheel', function(e) {
     // Don't interfere with bubble-click lerp animation
     if (lerpActive && bubbleLerpStartTime > 0) return;
     e.preventDefault();
-    var totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    let totalH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
     if (!wheelRaf) {
       wheelCurrent = document.documentElement.scrollTop;
       wheelTarget = wheelCurrent;
@@ -1814,12 +2211,12 @@ workDetail.addEventListener('wheel', function(e) {
 
 // ═══════════ NAV WAVEFORM ═══════════
 (function(){
-  var waveCanvas = document.getElementById('navWaveform');
+  let waveCanvas = document.getElementById('navWaveform');
   if (!waveCanvas) return;
-  var ctx = waveCanvas.getContext('2d');
-  var dpr = window.devicePixelRatio || 1;
-  var waveW = 0, waveH = 0;
-  var history = new Array(64).fill(0);
+  let ctx = waveCanvas.getContext('2d');
+  let dpr = window.devicePixelRatio || 1;
+  let waveW = 0, waveH = 0;
+  let history = new Array(64).fill(0);
 
   function initSize() {
     waveW = waveCanvas.offsetWidth || waveCanvas.width || 140;
@@ -1830,31 +2227,31 @@ workDetail.addEventListener('wheel', function(e) {
   }
   initSize();
 
-  var noisePhase = 0;
+  let noisePhase = 0;
   function draw() {
     initSize();
     if (waveW < 2 || waveH < 2) { requestAnimationFrame(draw); return; }
     ctx.clearRect(0, 0, waveW, waveH);
 
-    var playing = window.__audioPlaying === true;
-    var mid = waveH / 2;
+    let playing = window.__audioPlaying === true;
+    let mid = waveH / 2;
 
     // Build smooth bar-style waveform
-    var segs = history.length - 1;
-    var segW = waveW / segs;
+    let segs = history.length - 1;
+    let segW = waveW / segs;
 
     // Push new random bar height (or zero if not playing)
     noisePhase += 0.08;
-    var active = playing;
+    let active = playing;
     // When not playing, fade to flat
-    var nextVal = active ? (Math.sin(noisePhase * 1.7) * 0.4 + Math.sin(noisePhase * 3.1) * 0.3 + Math.sin(noisePhase * 5.3) * 0.2) : 0;
+    let nextVal = active ? (Math.sin(noisePhase * 1.7) * 0.4 + Math.sin(noisePhase * 3.1) * 0.3 + Math.sin(noisePhase * 5.3) * 0.2) : 0;
     history.push(nextVal);
     if (history.length > segs + 1) history.shift();
 
     // Fade to flat when not playing
-    var smooth = active ? 0.6 : 0.92;
-    for (var i = 0; i < history.length; i++) {
-      var target = active ? history[i] : 0;
+    let smooth = active ? 0.6 : 0.92;
+    for (let i = 0; i < history.length; i++) {
+      let target = active ? history[i] : 0;
       history[i] = history[i] * smooth + target * (1 - smooth);
     }
 
@@ -1865,9 +2262,9 @@ workDetail.addEventListener('wheel', function(e) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
-    for (var i = 0; i < history.length; i++) {
-      var val = Math.max(-1, Math.min(1, history[i]));
-      var y = mid + val * (waveH * 0.32);
+    for (let i = 0; i < history.length; i++) {
+      let val = Math.max(-1, Math.min(1, history[i]));
+      let y = mid + val * (waveH * 0.32);
       if (i === 0) ctx.moveTo(0, y);
       else ctx.lineTo(i * segW, y);
     }
