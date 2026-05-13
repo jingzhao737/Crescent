@@ -1,5 +1,5 @@
 /* PORTFOLIO - DARK / LIGHT THEME . ART DIRECTION */
-@font-face{font-family:"JosefinSans";src:url("font/static/JosefinSans-Bold.ttf") format("truetype");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"JosefinSans";src:url("Font/static/JosefinSans-Bold.ttf") format("truetype");font-weight:700;font-style:normal;font-display:swap}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 
 /* Focus visible — keyboard-only outline */
