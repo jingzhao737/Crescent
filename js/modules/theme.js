@@ -9,29 +9,31 @@
   let stringEl = document.getElementById('themePullString');
   if (!btn) return;
 
-  // ── Web Audio API sound synth ──
+  // ── Audio ──
   let audioCtx = null;
+  let clickBuffer = null;
   function initAudio() {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      fetch('sound/sound1/Ding.wav')
+        .then(function(r) { return r.arrayBuffer(); })
+        .then(function(buf) { return audioCtx.decodeAudioData(buf); })
+        .then(function(b) { clickBuffer = b; })
+        .catch(function() {});
     }
     if (audioCtx.state === 'suspended') audioCtx.resume();
   }
-  function playTick(rate, vol) {
-    if (!audioCtx) return;
-    let t = audioCtx.currentTime;
-    let osc = audioCtx.createOscillator();
+  function playClick() {
+    if (!audioCtx || !clickBuffer) return;
+    let src = audioCtx.createBufferSource();
     let gain = audioCtx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(2800 * rate, t);
-    osc.frequency.exponentialRampToValueAtTime(400 * rate, t + 0.06);
-    gain.gain.setValueAtTime(vol || 0.12, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start(t); osc.stop(t + 0.08);
+    src.buffer = clickBuffer;
+    src.playbackRate.value = 0.92 + Math.random() * 0.16;
+    gain.gain.setValueAtTime(0.4 + Math.random() * 0.2, audioCtx.currentTime);
+    src.connect(gain).connect(audioCtx.destination);
+    src.start(audioCtx.currentTime);
   }
-  function playClick() { playTick(1, 0.15); }
-  function playBounce() { playTick(0.65, 0.08); }
+  function playBounce() { playClick(); }
 
   let dragEnd = 40;
   let threshold = 60;

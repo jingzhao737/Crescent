@@ -1,4 +1,4 @@
-;// ═══════════ HANGING CIRCLES ═══════════
+﻿;// ═══════════ HANGING CIRCLES ═══════════
 (function() {
   let canvas = document.getElementById('framesCanvas');
   if (!canvas) return;
@@ -27,8 +27,8 @@
   })();
 
   let springK = 0.05;
-  let damping = 0.84;
-  let gravity = 0.06;
+  let damping = 0.995;
+  let gravity = 0.35;
 
   let thumbs = [];
   let draggedIdx = -1;
@@ -38,6 +38,10 @@
   let dragStartX = 0, dragStartY = 0;
   let prevMouseX = 0, prevMouseY = 0;
   let mouseCanvasX = 0, mouseCanvasY = 0;
+  let frameCount = 0;
+  let windActive = 0;      // 0=idle, >0 = active frames remaining
+  let windDir = 0;
+  let windPower = 0;
 
   // --- audio players for each disc ---
   let audios = [
@@ -127,16 +131,15 @@
         let cs = getCircleSz(w);
         let restX = a.x + a.restOffX;
         let restY = a.y + a.stringLen + (yOffsets[i] || 0);
-        let startY = -cs * 3;
-        let startX = restX + (Math.random() - 0.5) * 60;
+        let startY = restY;
+        let startX = restX;
         thumbs.push({
           x: startX, y: startY, vx: 0, vy: 0,
           anchorX: a.x, anchorY: a.y,
           restX: restX, restY: restY,
           dispW: cs, dispH: cs,
           color: knobColors[i],
-          entering: true,
-          enterDelay: loadDelay + i * 0.12,
+          entering: false,
           restOffX: 0,
           hoverAlpha: 0
         });
@@ -178,6 +181,7 @@
   let startTime = 0;
 
   function update(ts) {
+    frameCount++;
     if (!startTime) startTime = ts;
     let elapsed = (ts - startTime) / 1000;
 
@@ -209,38 +213,73 @@
 
       if (i === draggedIdx) continue;
 
-      if (t.entering) {
-        if (elapsed < t.enterDelay) continue;
-        t.vy += gravity;
-        t.y += t.vy;
-        t.vx += (t.restX - t.x) * 0.03;
-        t.x += t.vx;
-        t.vx *= 0.9;
-        if (t.y >= t.restY) {
-          t.y = t.restY;
-          t.vy *= -0.12;
-          if (Math.abs(t.vy) < 0.3 && Math.abs(t.x - t.restX) < 1) {
-            t.y = t.restY;
-            t.x = t.restX;
-            t.vx = 0; t.vy = 0;
-            t.entering = false;
-          }
-        }
-        continue;
-      }
+      // Rope constraint variables
+      let ax = t.anchorX, ay = t.anchorY;
+      let dx = t.x - ax;
+      let dy = t.y - ay;
+      let dist = Math.sqrt(dx * dx + dy * dy);
+      let ropeLen = t.restY - t.anchorY + t.dispH * 0.5;
 
-      let dx = t.restX - t.x;
-      let dy2 = t.restY - t.y;
-      t.vx += dx * springK;
-      t.vy += dy2 * springK;
+      // Normal physics: gravity + rope constraint
+      t.vy += gravity;
       t.vx *= damping;
       t.vy *= damping;
       t.x += t.vx;
       t.y += t.vy;
+
+      // Enforce rope length constraint
+      dx = t.x - ax;
+      dy = t.y - ay;
+      dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > ropeLen && dist > 0.01) {
+        let nx = dx / dist, ny = dy / dist;
+        t.x = ax + nx * ropeLen;
+        t.y = ay + ny * ropeLen;
+        // Remove outward radial velocity (rope can't push, only pull)
+        let vradial = t.vx * nx + t.vy * ny;
+        if (vradial > 0) {
+          t.vx -= vradial * nx * 0.4;
+          t.vy -= vradial * ny * 0.4;
+        }
+      }
+
+      // Occasional random wind puff on non-dragged discs
+      if (frameCount % 8 === i && i !== draggedIdx && i !== latchedIdx) {
+        let r = Math.random();
+        if (r < 0.015) {
+          t.vx += (Math.random() - 0.5) * 0.6;
+        } else if (r < 0.04) {
+          t.vx += (Math.random() - 0.5) * 0.15;
+        }
+      }
+
+      // Sway for rope curve
+      if (t._sway === undefined) t._sway = 0;
+      t._sway += (t.vx * 0.02 - t._sway) * 0.08;
+
+      // Sequenced wind: each disc gets hit at a staggered frame
+      if (windActive > 0 && i !== draggedIdx && i !== latchedIdx) {
+        let order = windDir > 0 ? i : (3 - i);  // 0,1,2,3 or 3,2,1,0
+        if (windActive === 12 - order * 3) {
+          // Apply impulse on this disc's frame
+          let impulse = windPower * windDir * (0.7 + Math.random() * 0.6);
+          t.vx += impulse;
+        }
+      }
     }
   }
 
-  function drawString(ax, ay, bx, by) {
+  // Wind sequencer
+  if (windActive > 0) {
+    windActive--;
+  } else if (Math.random() < 0.015) {
+    // Start new gust
+    windActive = 24;
+    windDir = Math.random() < 0.5 ? 1 : -1;
+    windPower = 0.1 + Math.random() * 0.35;
+  }
+
+  function drawString(ax, ay, bx, by, sway) {
     let dx = bx - ax, dy = by - ay;
     let len = Math.sqrt(dx * dx + dy * dy);
     if (len < 2) return;
@@ -260,16 +299,19 @@
       let t0 = g / subSegs;
       let t1 = (g + 1) / subSegs;
       let alpha = 0.28 * (t0 + t1) / 2;
+      let sc0 = sway * Math.sin(t0 * Math.PI) * len * 0.06;
+      let sc1 = sway * Math.sin(t1 * Math.PI) * len * 0.06;
       ctx.beginPath();
-      let x0 = ax + dx * t0 + perpX * Math.sin(t0 * coils * Math.PI * 2) * amp;
-      let y0 = ay + dy * t0 + perpY * Math.sin(t0 * coils * Math.PI * 2) * amp;
+      let x0 = ax + dx * t0 + perpX * (Math.sin(t0 * coils * Math.PI * 2) * amp + sc0);
+      let y0 = ay + dy * t0 + perpY * (Math.sin(t0 * coils * Math.PI * 2) * amp + sc0);
       ctx.moveTo(x0, y0);
       let steps = Math.floor((t1 - t0) * segments);
       if (steps < 4) steps = 4;
       for (let s = 1; s <= steps; s++) {
         let tt = t0 + (s / steps) * (t1 - t0);
-        let x = ax + dx * tt + perpX * Math.sin(tt * coils * Math.PI * 2) * amp;
-        let y = ay + dy * tt + perpY * Math.sin(tt * coils * Math.PI * 2) * amp;
+        let sc = sway * Math.sin(tt * Math.PI) * len * 0.06;
+        let x = ax + dx * tt + perpX * (Math.sin(tt * coils * Math.PI * 2) * amp + sc);
+        let y = ay + dy * tt + perpY * (Math.sin(tt * coils * Math.PI * 2) * amp + sc);
         ctx.lineTo(x, y);
       }
       ctx.strokeStyle = 'rgba(' + (isLight ? '0,0,0' : '255,255,255') + ',' + alpha + ')';
@@ -329,7 +371,20 @@
 
     // Latch clips handled via HTML overlay, not canvas
 
-    drawString(t.anchorX, t.anchorY, t.x, t.y - r);
+    // Draw rope from anchor, stopping short of disc edge
+    let rdx = t.x - t.anchorX, rdy = t.y - t.anchorY;
+    let rDist = Math.sqrt(rdx * rdx + rdy * rdy);
+    let hideTop = r * 0.3;      // hide near anchor
+    let hideBot = r * 0.75;     // stop before disc edge
+    let visLen = rDist - hideTop - hideBot;
+    if (visLen > 2) {
+      let sx = t.anchorX + rdx * (hideTop / rDist);
+      let sy = t.anchorY + rdy * (hideTop / rDist);
+      let ex = t.x - rdx * (hideBot / rDist);
+      let ey = t.y - rdy * (hideBot / rDist);
+      let sway = t._sway || 0;
+      drawString(sx, sy, ex, ey, sway);
+    }
 
     ctx.save();
     ctx.translate(t.x, t.y);
@@ -427,82 +482,104 @@
     }
   });
 
+  // Canvas mousemove: hover only (drag handled globally)
   canvas.addEventListener('mousemove', function(e) {
     let rect = canvas.getBoundingClientRect();
     let mx = e.clientX - rect.left;
     let my = e.clientY - rect.top;
     mouseCanvasX = mx;
     mouseCanvasY = my;
-    if (draggedIdx >= 0) {
-      let t = thumbs[draggedIdx];
-      t.x = mx + dragOffX;
-      t.y = my + dragOffY;
-      // If dragging a latched disc far enough, unlatch it
-      if (latchedIdx === draggedIdx) {
-        let heroRect3 = document.getElementById('home').getBoundingClientRect();
-        let cRect3 = canvas.getBoundingClientRect();
-        let latchCY = (heroRect3.top + 70) - cRect3.top;
-        let pullDist = Math.sqrt(Math.pow(t.x - t.anchorX, 2) + Math.pow(t.y - latchCY, 2));
-        if (pullDist > t.dispW * 0.6) {
-          latchedIdx = -1;
-          document.querySelectorAll('.latch-clip').forEach(function(c){ c.classList.remove('latched'); });
-          if (window.__navWaveStop) window.__navWaveStop(draggedIdx);
-        } else {
-          // Still close, snap back
-          t.x = t.anchorX; t.y = latchCY;
-        }
-      } else {
-        // Snap magnetism: if near latch clip, pull toward it
-        let heroRect3 = document.getElementById('home').getBoundingClientRect();
-        let latchScreenY2 = heroRect3.top + 70;
-        let canvasRect3 = canvas.getBoundingClientRect();
-        let discSX = canvasRect3.left + t.x;
-        let discSY = canvasRect3.top + t.y;
-        let latchSX = canvasRect3.left + t.anchorX;
-        let snapDx = discSX - latchSX;
-        let snapDy = discSY - latchScreenY2;
-        let snapDist = Math.sqrt(snapDx * snapDx + snapDy * snapDy);
-        let snapZone = t.dispW * 1.4;
-        if (snapDist < snapZone && snapDist > 5) {
-          let pull = (snapZone - snapDist) / snapZone;
-          pull = pull * pull * 0.12;
-          t.x -= (snapDx / snapDist) * snapDist * pull;
-          t.y -= (snapDy / snapDist) * snapDist * pull;
-        }
-      }
-      t.vx = (mx - prevMouseX) * 0.4;
-      t.vy = (my - prevMouseY) * 0.4;
-      prevMouseX = mx;
-      prevMouseY = my;
-    } else {
+    if (draggedIdx < 0) {
       canvas.style.cursor = getThumbAt(mx, my) >= 0 ? 'grab' : '';
       handleAudioHover(getThumbAt(mx, my));
     }
   });
 
-  canvas.addEventListener('mouseup', function(e) {
-    if (draggedIdx >= 0) {
-      let rect = canvas.getBoundingClientRect();
-      let mx = e.clientX - rect.left;
-      let my = e.clientY - rect.top;
-      let dist = Math.sqrt(Math.pow(mx - dragStartX, 2) + Math.pow(my - dragStartY, 2));
-      if (dist < 3) {
-        // Short click: if this disc is latched, unlatch it with a bounce
+  canvas.addEventListener('mouseleave', function() {
+    // Don't interrupt drag when mouse leaves canvas
+    if (draggedIdx >= 0) return;
+    hoveredIdx = -1;
+    handleAudioHover(-1);
+    canvas.style.cursor = '';
+  });
 
-        if (latchedIdx === draggedIdx) {
-          let tl = thumbs[latchedIdx];
-          tl.vy = -8;
-          tl.vx = (Math.random() - 0.5) * 3;
-          tl.entering = false;
-          latchedIdx = -1;
-          document.querySelectorAll('.latch-clip').forEach(function(c){ c.classList.remove('latched'); });
-          // Stop audio playback
-          if (window.__navWaveStop) window.__navWaveStop(draggedIdx);
-          draggedIdx = -1;
-          hoveredIdx = -1;
-          canvas.style.cursor = '';
-          return;
-        }
+  // Global mouseup/mousemove so drag survives leaving canvas
+  window.addEventListener('mousemove', function(e) {
+    if (draggedIdx < 0) return;
+    let rect = canvas.getBoundingClientRect();
+    let mx = e.clientX - rect.left;
+    let my = e.clientY - rect.top;
+    mouseCanvasX = mx;
+    mouseCanvasY = my;
+    let t = thumbs[draggedIdx];
+    t.x = mx + dragOffX;
+    t.y = my + dragOffY;
+    // Rope constraint on drag — can't pull beyond rope length
+    let rdx = t.x - t.anchorX;
+    let rdy = t.y - t.anchorY;
+    let rdist = Math.sqrt(rdx * rdx + rdy * rdy);
+    let ropeLen = t.restY - t.anchorY + t.dispH * 0.5;
+    if (rdist > ropeLen && rdist > 0.01) {
+      let rnx = rdx / rdist;
+      let rny = rdy / rdist;
+      t.x = t.anchorX + rnx * ropeLen;
+      t.y = t.anchorY + rny * ropeLen;
+    }
+    // If dragging a latched disc far enough, unlatch it
+    if (latchedIdx === draggedIdx) {
+      let heroRect3 = document.getElementById('home').getBoundingClientRect();
+      let cRect3 = canvas.getBoundingClientRect();
+      let latchCY = (heroRect3.top + 70) - cRect3.top;
+      let pullDist = Math.sqrt(Math.pow(t.x - t.anchorX, 2) + Math.pow(t.y - latchCY, 2));
+      if (pullDist > t.dispW * 0.6) {
+        latchedIdx = -1;
+        document.querySelectorAll('.latch-clip').forEach(function(c){ c.classList.remove('latched'); });
+        if (window.__navWaveStop) window.__navWaveStop(draggedIdx);
+      } else {
+        t.x = t.anchorX; t.y = latchCY;
+      }
+    } else {
+      // Snap magnetism
+      let heroRect3 = document.getElementById('home').getBoundingClientRect();
+      let latchScreenY2 = heroRect3.top + 70;
+      let canvasRect3 = canvas.getBoundingClientRect();
+      let discSX = canvasRect3.left + t.x;
+      let discSY = canvasRect3.top + t.y;
+      let latchSX = canvasRect3.left + t.anchorX;
+      let snapDx = discSX - latchSX;
+      let snapDy = discSY - latchScreenY2;
+      let snapDist = Math.sqrt(snapDx * snapDx + snapDy * snapDy);
+      let snapZone = t.dispW * 0.3;
+      if (snapDist < snapZone && snapDist > 3) {
+        let pull = (snapZone - snapDist) / snapZone;
+        pull = pull * pull * pull * 0.06;
+        t.x -= (snapDx / snapDist) * snapDist * pull;
+        t.y -= (snapDy / snapDist) * snapDist * pull;
+      }
+    }
+    t.vx = (mx - prevMouseX) * 0.28;
+    t.vy = (my - prevMouseY) * 0.28;
+    prevMouseX = mx;
+    prevMouseY = my;
+  });
+
+  window.addEventListener('mouseup', function(e) {
+    if (draggedIdx < 0) return;
+    let rect = canvas.getBoundingClientRect();
+    let mx = e.clientX - rect.left;
+    let my = e.clientY - rect.top;
+    let dist = Math.sqrt(Math.pow(mx - dragStartX, 2) + Math.pow(my - dragStartY, 2));
+    if (dist < 3) {
+      // Short click: unlatch or open work detail
+      if (latchedIdx === draggedIdx) {
+        let tl = thumbs[latchedIdx];
+        tl.vy = -8;
+        tl.vx = (Math.random() - 0.5) * 3;
+        tl.entering = false;
+        latchedIdx = -1;
+        document.querySelectorAll('.latch-clip').forEach(function(c){ c.classList.remove('latched'); });
+        if (window.__navWaveStop) window.__navWaveStop(draggedIdx);
+      } else {
         let works = document.querySelectorAll('.work-card');
         if (works[draggedIdx]) {
           let card = works[draggedIdx];
@@ -513,55 +590,41 @@
             openDetail(data, hero);
           }
         }
-      } else {
-        // Drag release: check if near HTML latch clip
-        let t = thumbs[draggedIdx];
-        let heroRect = document.getElementById('home').getBoundingClientRect();
-        let latchScreenY = heroRect.top + 70;
-        // Disc screen position (canvas uses transform, so screen = canvas pos + canvas offset)
-        let canvasRect = canvas.getBoundingClientRect();
-        let discScreenX = canvasRect.left + t.x;
-        let discScreenY = canvasRect.top + t.y;
-        // Latch X on screen = canvas left + anchorX
-        let latchScreenX = canvasRect.left + t.anchorX;
-        let dx2 = discScreenX - latchScreenX;
-        let dy2 = discScreenY - latchScreenY;
-        let latchDist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-        let latchThreshold = t.dispW * 1.2;
-        if (latchDist < latchThreshold) {
-          // Latch this disc, eject previous
-          if (latchedIdx >= 0 && latchedIdx !== draggedIdx) {
-            let ejected = thumbs[latchedIdx];
-            ejected.vy = -6;
-            ejected.vx = (Math.random() - 0.5) * 2;
-            ejected.entering = false;
-          }
-          latchedIdx = draggedIdx;
-          // Snap disc to latch position
-          let heroRect = document.getElementById('home').getBoundingClientRect();
-          let cRect = canvas.getBoundingClientRect();
-          t.x = t.anchorX;
-          t.y = (heroRect.top + 60) - cRect.top + 14;
-          t.vx = 0; t.vy = 0;
-          t.vx = 0; t.vy = 0;
-          // Update CSS class
-          document.querySelectorAll('.latch-clip').forEach(function(c, ci){
-            c.classList.toggle('latched', ci === latchedIdx);
-          });
-          // Start constant playback
-          if (window.__navWaveForcePlay) window.__navWaveForcePlay(draggedIdx);
-        }
       }
-      draggedIdx = -1;
-      hoveredIdx = -1;
-      canvas.style.cursor = '';
+    } else {
+      // Drag release: check if near latch clip
+      let t = thumbs[draggedIdx];
+      let heroRect = document.getElementById('home').getBoundingClientRect();
+      let latchScreenY = heroRect.top + 70;
+      let canvasRect = canvas.getBoundingClientRect();
+      let discScreenX = canvasRect.left + t.x;
+      let discScreenY = canvasRect.top + t.y;
+      let latchScreenX = canvasRect.left + t.anchorX;
+      let dx2 = discScreenX - latchScreenX;
+      let dy2 = discScreenY - latchScreenY;
+      let latchDist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+      let latchThreshold = t.dispW * 0.45;
+      if (latchDist < latchThreshold) {
+        if (latchedIdx >= 0 && latchedIdx !== draggedIdx) {
+          let ejected = thumbs[latchedIdx];
+          ejected.vy = -6;
+          ejected.vx = (Math.random() - 0.5) * 2;
+          ejected.entering = false;
+        }
+        latchedIdx = draggedIdx;
+        let heroRect2 = document.getElementById('home').getBoundingClientRect();
+        let cRect2 = canvas.getBoundingClientRect();
+        t.x = t.anchorX;
+        t.y = (heroRect2.top + 60) - cRect2.top + 14;
+        t.vx = 0; t.vy = 0;
+        document.querySelectorAll('.latch-clip').forEach(function(c, ci){
+          c.classList.toggle('latched', ci === latchedIdx);
+        });
+        if (window.__navWaveForcePlay) window.__navWaveForcePlay(draggedIdx);
+      }
     }
-  });
-
-  canvas.addEventListener('mouseleave', function() {
-    if (draggedIdx >= 0) draggedIdx = -1;
+    draggedIdx = -1;
     hoveredIdx = -1;
-    handleAudioHover(-1);
     canvas.style.cursor = '';
   });
 
